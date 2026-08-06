@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_icon.dart';
@@ -8,8 +9,33 @@ import 'package:hugeicons/hugeicons.dart';
 
 void main() => runApp(const RuszajApp());
 
-class RuszajApp extends StatelessWidget {
+class RuszajApp extends StatefulWidget {
   const RuszajApp({super.key});
+
+  @override
+  State<RuszajApp> createState() => _RuszajAppState();
+}
+
+class _RuszajAppState extends State<RuszajApp> {
+  Locale? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocale();
+  }
+
+  Future<void> _loadLocale() async {
+    final preferences = await SharedPreferences.getInstance();
+    final language = preferences.getString('language');
+    if (language != null && mounted) setState(() => _locale = Locale(language));
+  }
+
+  Future<void> _setLocale(Locale locale) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString('language', locale.languageCode);
+    if (mounted) setState(() => _locale = locale);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +43,7 @@ class RuszajApp extends StatelessWidget {
       title: 'Ruszaj',
       debugShowCheckedModeBanner: false,
       theme: appTheme(),
+      locale: _locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -31,13 +58,15 @@ class RuszajApp extends StatelessWidget {
           orElse: () => supported.first,
         );
       },
-      home: const HomeScreen(),
+      home: HomeScreen(onLocaleChanged: _setLocale),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.onLocaleChanged});
+
+  final ValueChanged<Locale> onLocaleChanged;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -46,6 +75,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
   String _city = 'Warszawa';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCity();
+  }
+
+  Future<void> _loadCity() async {
+    final preferences = await SharedPreferences.getInstance();
+    final city = preferences.getString('city');
+    if (city != null && mounted) setState(() => _city = city);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +134,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Center(
                 child: FloatingNav(
                   selectedIndex: _selectedTab,
-                  onSelected: (index) => setState(() => _selectedTab = index),
+                  onSelected: (index) async {
+                    if (index == 2) {
+                      await _showSettings();
+                    } else {
+                      setState(() => _selectedTab = index);
+                    }
+                  },
                 ),
               ),
             ),
@@ -110,7 +157,21 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _CitySheet(title: l10n.selectCity),
     );
-    if (selected != null && mounted) setState(() => _city = selected);
+    if (selected != null && mounted) {
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString('city', selected);
+      setState(() => _city = selected);
+    }
+  }
+
+  Future<void> _showSettings() async {
+    final l10n = AppLocalizations.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          _SettingsSheet(l10n: l10n, onLocaleChanged: widget.onLocaleChanged),
+    );
   }
 }
 
@@ -360,5 +421,86 @@ class _CitySheet extends StatelessWidget {
           ),
       ],
     ),
+  );
+}
+
+class _SettingsSheet extends StatelessWidget {
+  const _SettingsSheet({required this.l10n, required this.onLocaleChanged});
+  final AppLocalizations l10n;
+  final ValueChanged<Locale> onLocaleChanged;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
+    decoration: const BoxDecoration(
+      color: AppColors.canvas,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.line,
+              borderRadius: AppRadii.pill,
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          l10n.settings,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          l10n.language,
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _LanguageOption(
+          label: l10n.english,
+          locale: const Locale('en'),
+          onChanged: onLocaleChanged,
+        ),
+        _LanguageOption(
+          label: l10n.polish,
+          locale: const Locale('pl'),
+          onChanged: onLocaleChanged,
+        ),
+      ],
+    ),
+  );
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.label,
+    required this.locale,
+    required this.onChanged,
+  });
+  final String label;
+  final Locale locale;
+  final ValueChanged<Locale> onChanged;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    contentPadding: EdgeInsets.zero,
+    title: Text(label),
+    trailing: const AppIcon(
+      HugeIcons.strokeRoundedArrowRight01,
+      size: 18,
+      color: AppColors.subtle,
+    ),
+    onTap: () {
+      onChanged(locale);
+      Navigator.pop(context);
+    },
   );
 }
