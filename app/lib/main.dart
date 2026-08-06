@@ -371,10 +371,14 @@ class _JourneyCardState extends State<_JourneyCard> {
         to: _toValue ?? _toController.text,
       );
       if (!mounted) return;
-      await showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: Colors.transparent,
-        builder: (context) => _JourneyResults(journeys: journeys),
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (context) => _JourneyResults(
+            journeys: journeys,
+            fromName: _fromController.text,
+            toName: _toController.text,
+          ),
+        ),
       );
     } catch (_) {
       if (mounted) {
@@ -752,113 +756,145 @@ class _Suggestions extends StatelessWidget {
 }
 
 class _JourneyResults extends StatelessWidget {
-  const _JourneyResults({required this.journeys});
+  const _JourneyResults({
+    required this.journeys,
+    required this.fromName,
+    required this.toName,
+  });
   final List<JourneyOption> journeys;
+  final String fromName;
+  final String toName;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-      decoration: const BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.line,
-                borderRadius: AppRadii.pill,
-              ),
-            ),
-          ),
-          const SizedBox(height: 22),
-          Text(
-            l10n.routeOptions,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 14),
-          if (journeys.isEmpty)
-            Text(l10n.noRoute, style: const TextStyle(color: AppColors.muted)),
-          for (final journey in journeys.take(5))
-            GestureDetector(
-              onTap: () => showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) => _JourneyDetail(journey: journey),
-              ),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: AppRadii.field,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const AppIcon(
+                      HugeIcons.strokeRoundedArrowLeft01,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _time(journey.departure),
+                          l10n.routeOptions,
                           style: const TextStyle(
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: AppIcon(
-                            HugeIcons.strokeRoundedArrowRight01,
-                            size: 17,
-                            color: AppColors.subtle,
-                          ),
-                        ),
+                        const SizedBox(height: 5),
                         Text(
-                          _time(journey.arrival),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                          '$fromName  →  $toName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: AppColors.muted),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 7,
-                      children: [
-                        for (final leg in journey.legs)
-                          _ModeChip(leg: leg, l10n: l10n),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      journey.transfers == 0
-                          ? l10n.transit
-                          : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-        ],
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                itemCount: journeys.length,
+                itemBuilder: (context, index) {
+                  final journey = journeys[index];
+                  return GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => _JourneyDetail(
+                          journey: journey,
+                          fromName: fromName,
+                          toName: toName,
+                        ),
+                      ),
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: AppRadii.field,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                _time(journey.departure),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: AppIcon(
+                                  HugeIcons.strokeRoundedArrowRight01,
+                                  size: 17,
+                                  color: AppColors.subtle,
+                                ),
+                              ),
+                              Text(
+                                _time(journey.arrival),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                                style: const TextStyle(color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 7,
+                            runSpacing: 7,
+                            children: [
+                              for (final leg in journey.legs)
+                                _ModeChip(leg: leg, l10n: l10n),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            journey.transfers == 0
+                                ? l10n.transit
+                                : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -907,68 +943,107 @@ class _ModeChip extends StatelessWidget {
 }
 
 class _JourneyDetail extends StatelessWidget {
-  const _JourneyDetail({required this.journey});
+  const _JourneyDetail({
+    required this.journey,
+    required this.fromName,
+    required this.toName,
+  });
   final JourneyOption journey;
+  final String fromName;
+  final String toName;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * .82,
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-      decoration: const BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.line,
-                  borderRadius: AppRadii.pill,
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const AppIcon(
+                        HugeIcons.strokeRoundedArrowLeft01,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            fromName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            toName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Text(
-                  _time(journey.departure),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _time(journey.departure),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: AppIcon(
+                          HugeIcons.strokeRoundedArrowRight01,
+                          color: AppColors.subtle,
+                        ),
+                      ),
+                      Text(
+                        _time(journey.arrival),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                        style: const TextStyle(color: AppColors.muted),
+                      ),
+                    ],
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: AppIcon(
-                    HugeIcons.strokeRoundedArrowRight01,
-                    color: AppColors.subtle,
-                  ),
-                ),
-                Text(
-                  _time(journey.arrival),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
-                  style: const TextStyle(color: AppColors.muted),
-                ),
-              ],
+                  const SizedBox(height: 22),
+                  for (final leg in journey.legs)
+                    _DetailLeg(leg: leg, l10n: l10n),
+                ]),
+              ),
             ),
-            const SizedBox(height: 22),
-            for (final leg in journey.legs) _DetailLeg(leg: leg, l10n: l10n),
           ],
         ),
       ),

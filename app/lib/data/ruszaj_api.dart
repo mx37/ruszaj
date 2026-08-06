@@ -144,9 +144,9 @@ class RuszajApi {
     required String from,
     required String to,
   }) async {
-    final uri = Uri.parse(
-      '$_effectiveBaseUrl/v1/journeys',
-    ).replace(queryParameters: {'from': from, 'to': to});
+    final uri = Uri.parse('$_effectiveBaseUrl/v1/journeys').replace(
+      queryParameters: {'from': from, 'to': to, 'numItineraries': '10'},
+    );
     final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
