@@ -253,6 +253,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @routeOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Route options'**
+  String get routeOptions;
+
+  /// No description provided for @searching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching...'**
+  String get searching;
+
+  /// No description provided for @noRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'No route found'**
+  String get noRoute;
+
+  /// No description provided for @requestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load results'**
+  String get requestFailed;
 }
 
 class _AppLocalizationsDelegate

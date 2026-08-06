@@ -26,4 +26,8 @@
   "searchCities": "Szukaj miast",
   "noResults": "Brak wyników",
   "close": "Zamknij"
+  ,"routeOptions": "Opcje trasy"
+  ,"searching": "Wyszukiwanie..."
+  ,"noRoute": "Nie znaleziono trasy"
+  ,"requestFailed": "Nie udało się pobrać wyników"
 }

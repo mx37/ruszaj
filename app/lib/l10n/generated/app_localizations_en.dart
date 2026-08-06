@@ -86,4 +86,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get routeOptions => 'Route options';
+
+  @override
+  String get searching => 'Searching...';
+
+  @override
+  String get noRoute => 'No route found';
+
+  @override
+  String get requestFailed => 'Could not load results';
 }

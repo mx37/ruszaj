@@ -86,4 +86,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get close => 'Zamknij';
+
+  @override
+  String get routeOptions => 'Opcje trasy';
+
+  @override
+  String get searching => 'Wyszukiwanie...';
+
+  @override
+  String get noRoute => 'Nie znaleziono trasy';
+
+  @override
+  String get requestFailed => 'Nie udało się pobrać wyników';
 }
