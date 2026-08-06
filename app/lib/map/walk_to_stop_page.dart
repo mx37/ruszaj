@@ -85,33 +85,107 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final firstTransitIndex = widget.journey.legs.indexWhere(
-      (leg) => leg.mode != 'WALK',
+    final legs = widget.journey.legs;
+    final polylines = <Polyline>[];
+    final allPoints = <LatLng>[];
+    for (final leg in legs) {
+      final points = decodePolyline(
+        leg.geometry ?? '',
+        leg.geometryPrecision ?? 6,
+      );
+      if (points.isEmpty) {
+        final from = leg.fromLat != null && leg.fromLon != null
+            ? LatLng(leg.fromLat!, leg.fromLon!)
+            : null;
+        final to = leg.toLat != null && leg.toLon != null
+            ? LatLng(leg.toLat!, leg.toLon!)
+            : null;
+        if (from != null && to != null) {
+          polylines.add(
+            Polyline(
+              points: [from, to],
+              color: leg.mode == 'WALK' ? AppColors.blue : AppColors.ink,
+              strokeWidth: 5,
+            ),
+          );
+          allPoints.addAll([from, to]);
+        }
+        continue;
+      }
+      polylines.add(
+        Polyline(
+          points: points,
+          color: leg.mode == 'WALK' ? AppColors.blue : AppColors.ink,
+          strokeWidth: 5,
+        ),
+      );
+      allPoints.addAll(points);
+    }
+
+    final origin =
+        legs.isNotEmpty &&
+            legs.first.fromLat != null &&
+            legs.first.fromLon != null
+        ? LatLng(legs.first.fromLat!, legs.first.fromLon!)
+        : (allPoints.isNotEmpty
+              ? allPoints.first
+              : const LatLng(52.2297, 21.0122));
+    final destination =
+        legs.isNotEmpty && legs.last.toLat != null && legs.last.toLon != null
+        ? LatLng(legs.last.toLat!, legs.last.toLon!)
+        : (allPoints.isNotEmpty ? allPoints.last : origin);
+
+    final markers = <Marker>[
+      Marker(
+        point: origin,
+        width: 48,
+        height: 48,
+        child: const _MapMarker(
+          icon: HugeIcons.strokeRoundedLocation01,
+          color: AppColors.blue,
+        ),
+      ),
+    ];
+    for (var i = 1; i < legs.length; i++) {
+      final leg = legs[i];
+      if (leg.fromLat == null || leg.fromLon == null) continue;
+      markers.add(
+        Marker(
+          point: LatLng(leg.fromLat!, leg.fromLon!),
+          width: 48,
+          height: 48,
+          child: _MapMarker(
+            icon: HugeIcons.strokeRoundedArrowUpDown,
+            color: AppColors.green,
+          ),
+        ),
+      );
+    }
+    markers.add(
+      Marker(
+        point: destination,
+        width: 48,
+        height: 48,
+        child: const _MapMarker(
+          icon: HugeIcons.strokeRoundedBookmark01,
+          color: AppColors.green,
+        ),
+      ),
     );
-    final accessLegs = firstTransitIndex < 0
-        ? widget.journey.legs
-        : widget.journey.legs.take(firstTransitIndex).toList();
-    final points = accessLegs
-        .expand(
-          (leg) =>
-              decodePolyline(leg.geometry ?? '', leg.geometryPrecision ?? 6),
-        )
-        .toList();
-    final firstLeg = accessLegs.isEmpty ? null : accessLegs.first;
-    final boardingLeg = firstTransitIndex < 0
-        ? null
-        : widget.journey.legs[firstTransitIndex];
-    final origin = firstLeg?.fromLat != null && firstLeg?.fromLon != null
-        ? LatLng(firstLeg!.fromLat!, firstLeg.fromLon!)
-        : (points.isNotEmpty ? points.first : const LatLng(52.2297, 21.0122));
-    final boardingStop =
-        boardingLeg?.fromLat != null && boardingLeg?.fromLon != null
-        ? LatLng(boardingLeg!.fromLat!, boardingLeg.fromLon!)
-        : (points.isNotEmpty ? points.last : const LatLng(52.2310, 21.0101));
-    final fallback = points.isNotEmpty ? points : [origin, boardingStop];
-    final distance = _current == null
-        ? null
-        : Distance().as(LengthUnit.Meter, _current!, boardingStop).round();
+    if (_current != null) {
+      markers.add(
+        Marker(
+          point: _current!,
+          width: 54,
+          height: 54,
+          child: const _MapMarker(
+            icon: HugeIcons.strokeRoundedNavigation03,
+            color: AppColors.blue,
+          ),
+        ),
+      );
+    }
+    final fallback = allPoints.isNotEmpty ? allPoints : [origin, destination];
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -132,7 +206,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.walkTo,
+                          l10n.route,
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textMuted(context),
@@ -151,7 +225,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => _openMaps(origin, boardingStop),
+                    onPressed: () => _openMaps(origin, destination),
                     tooltip: l10n.openInMaps,
                     icon: const AppIcon(
                       HugeIcons.strokeRoundedNavigation03,
@@ -174,47 +248,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'dev.ruszaj.ruszaj',
                   ),
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: fallback,
-                        color: AppColors.blue,
-                        strokeWidth: 5,
-                      ),
-                    ],
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: origin,
-                        width: 48,
-                        height: 48,
-                        child: const _MapMarker(
-                          icon: HugeIcons.strokeRoundedLocation01,
-                          color: AppColors.blue,
-                        ),
-                      ),
-                      Marker(
-                        point: boardingStop,
-                        width: 48,
-                        height: 48,
-                        child: const _MapMarker(
-                          icon: HugeIcons.strokeRoundedBus01,
-                          color: AppColors.green,
-                        ),
-                      ),
-                      if (_current != null)
-                        Marker(
-                          point: _current!,
-                          width: 54,
-                          height: 54,
-                          child: const _MapMarker(
-                            icon: HugeIcons.strokeRoundedNavigation03,
-                            color: AppColors.blue,
-                          ),
-                        ),
-                    ],
-                  ),
+                  PolylineLayer(polylines: polylines),
+                  MarkerLayer(markers: markers),
                   RichAttributionWidget(
                     attributions: [
                       TextSourceAttribution('OpenStreetMap contributors'),
@@ -232,24 +267,36 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
               child: Row(
                 children: [
                   const AppIcon(
-                    HugeIcons.strokeRoundedNavigation03,
+                    HugeIcons.strokeRoundedRoute01,
                     color: AppColors.blue,
                     size: 27,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      distance == null
-                          ? l10n.locationUnavailable
-                          : '$distance m',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.journey.durationSeconds >= 0
+                              ? '${widget.journey.durationSeconds % 3600 ~/ 60} ${l10n.minutes}'
+                              : l10n.transit,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        if (widget.journey.transfers > 0)
+                          Text(
+                            '${widget.journey.transfers} ${l10n.transfers}',
+                            style: TextStyle(
+                              color: AppColors.textMuted(context),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   Text(
-                    l10n.walkTo,
+                    l10n.transit,
                     style: TextStyle(color: AppColors.textMuted(context)),
                   ),
                 ],
