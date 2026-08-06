@@ -243,7 +243,7 @@ class RuszajApi {
         if (walkingOnly) 'walkingOnly': 'true',
         if (time != null) 'time': time.toUtc().toIso8601String(),
         if (arriveBy) 'arriveBy': 'true',
-        if (pageCursor != null) 'pageCursor': pageCursor,
+        ...?(pageCursor == null ? null : {'pageCursor': pageCursor}),
       },
     );
     final response = await _client.get(uri).timeout(_timeout);
