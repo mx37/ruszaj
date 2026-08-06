@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SearchPlace {
@@ -192,9 +191,7 @@ class RuszajApi {
   String get _effectiveBaseUrl {
     if (_baseUrl.isNotEmpty) return _baseUrl;
     if (_baseUrlOverride.isNotEmpty) return _baseUrlOverride;
-    return defaultTargetPlatform == TargetPlatform.android
-        ? 'http://10.0.2.2:8080'
-        : 'http://127.0.0.1:8080';
+    return 'https://ruszaj.mx37.me';
   }
 
   Future<List<SearchPlace>> search(
