@@ -89,6 +89,7 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
           ...(params.numItineraries !== undefined ? { numItineraries: params.numItineraries } : {}),
           ...(params.pageCursor ? { pageCursor: params.pageCursor } : {}),
           directModes: ['WALK'],
+          timetableView: true,
         },
       });
 
