@@ -60,4 +60,13 @@
   "savedPlaces": "Saved places",
   "recentPlaces": "Recent places",
   "noUpcomingJourneys": "No upcoming departures"
+  ,"leaveAt": "Leave at"
+  ,"arriveBy": "Arrive by"
+  ,"now": "Now"
+  ,"earlier": "Earlier"
+  ,"later": "Later"
+  ,"departed": "Departed"
+  ,"saveTime": "Save time"
+  ,"cancel": "Cancel"
+  ,"openInMaps": "Open in Maps"
 }

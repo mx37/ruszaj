@@ -169,4 +169,31 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get noUpcomingJourneys => 'Brak najbliższych odjazdów';
+
+  @override
+  String get leaveAt => 'Wyjedź o';
+
+  @override
+  String get arriveBy => 'Przyjedź na';
+
+  @override
+  String get now => 'Teraz';
+
+  @override
+  String get earlier => 'Wcześniejsze';
+
+  @override
+  String get later => 'Późniejsze';
+
+  @override
+  String get departed => 'Odjechał';
+
+  @override
+  String get saveTime => 'Zapisz czas';
+
+  @override
+  String get cancel => 'Anuluj';
+
+  @override
+  String get openInMaps => 'Otwórz w Mapach';
 }

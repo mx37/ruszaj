@@ -60,4 +60,13 @@
   "savedPlaces": "Zapisane miejsca",
   "recentPlaces": "Ostatnie miejsca",
   "noUpcomingJourneys": "Brak najbliższych odjazdów"
+  ,"leaveAt": "Wyjedź o"
+  ,"arriveBy": "Przyjedź na"
+  ,"now": "Teraz"
+  ,"earlier": "Wcześniejsze"
+  ,"later": "Późniejsze"
+  ,"departed": "Odjechał"
+  ,"saveTime": "Zapisz czas"
+  ,"cancel": "Anuluj"
+  ,"openInMaps": "Otwórz w Mapach"
 }

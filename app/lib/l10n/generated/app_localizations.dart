@@ -415,6 +415,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No upcoming departures'**
   String get noUpcomingJourneys;
+
+  /// No description provided for @leaveAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave at'**
+  String get leaveAt;
+
+  /// No description provided for @arriveBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive by'**
+  String get arriveBy;
+
+  /// No description provided for @now.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get now;
+
+  /// No description provided for @earlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get earlier;
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
+
+  /// No description provided for @departed.
+  ///
+  /// In en, this message translates to:
+  /// **'Departed'**
+  String get departed;
+
+  /// No description provided for @saveTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Save time'**
+  String get saveTime;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @openInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Maps'**
+  String get openInMaps;
 }
 
 class _AppLocalizationsDelegate

@@ -169,4 +169,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noUpcomingJourneys => 'No upcoming departures';
+
+  @override
+  String get leaveAt => 'Leave at';
+
+  @override
+  String get arriveBy => 'Arrive by';
+
+  @override
+  String get now => 'Now';
+
+  @override
+  String get earlier => 'Earlier';
+
+  @override
+  String get later => 'Later';
+
+  @override
+  String get departed => 'Departed';
+
+  @override
+  String get saveTime => 'Save time';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get openInMaps => 'Open in Maps';
 }

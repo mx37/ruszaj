@@ -188,14 +188,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final to = route['toValue'] ?? route['to'] ?? '';
     if (from.isEmpty || to.isEmpty) return;
     try {
-      final journeys = await _api.journeys(from: from, to: to);
+      final page = await _api.journeyPage(from: from, to: to);
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           builder: (context) => _JourneyResults(
-            journeys: journeys,
+            page: page,
             fromName: route['from'] ?? from,
             toName: route['to'] ?? to,
+            from: from,
+            to: to,
           ),
         ),
       );
@@ -236,14 +238,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (_selectedTab == 1)
                         const _NearbyScreen()
                       else ...[
-                        Text(
-                          l10n.appTagline,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: AppColors.textMuted(context),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
                         _JourneyCard(
                           onUseLocation: _useCurrentLocation,
                           onSaved: _saveRecentRoute,
@@ -466,6 +460,8 @@ class _JourneyCardState extends State<_JourneyCard> {
   bool _editingFrom = true;
   int _searchRequestId = 0;
   bool _fieldFocused = false;
+  DateTime? _routeTime;
+  bool _arriveBy = false;
 
   String get _savedPlacesKey => 'saved_places_${widget.city}';
 
@@ -676,6 +672,29 @@ class _JourneyCardState extends State<_JourneyCard> {
     });
   }
 
+  Future<void> _pickRouteTime() async {
+    final result = await showModalBottomSheet<_RouteTimeSelection>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _RouteTimeSheet(
+        initialTime: _routeTime ?? DateTime.now(),
+        arriveBy: _arriveBy,
+      ),
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _routeTime = result.time;
+      _arriveBy = result.arriveBy;
+    });
+  }
+
+  String _routeTimeLabel(AppLocalizations l10n) {
+    if (_routeTime == null) return l10n.now;
+    final value = _routeTime!;
+    return '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  }
+
   String _placeValue(SearchPlace place) =>
       place.type == 'STOP' ? place.id : '${place.lat},${place.lon}';
 
@@ -690,9 +709,11 @@ class _JourneyCardState extends State<_JourneyCard> {
     }
     setState(() => _loadingRoute = true);
     try {
-      final journeys = await _api.journeys(
+      final page = await _api.journeyPage(
         from: _fromValue ?? _fromController.text,
         to: _toValue ?? _toController.text,
+        time: _routeTime,
+        arriveBy: _arriveBy,
       );
       await widget.onSaved(
         _fromController.text,
@@ -704,9 +725,13 @@ class _JourneyCardState extends State<_JourneyCard> {
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           builder: (context) => _JourneyResults(
-            journeys: journeys,
+            page: page,
             fromName: _fromController.text,
             toName: _toController.text,
+            from: _fromValue ?? _fromController.text,
+            to: _toValue ?? _toController.text,
+            time: _routeTime,
+            arriveBy: _arriveBy,
           ),
         ),
       );
@@ -793,10 +818,42 @@ class _JourneyCardState extends State<_JourneyCard> {
               searching: _searching,
               onSelected: (place) => _selectPlace(place, _editingFrom),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: _pickRouteTime,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.softOf(context),
+                borderRadius: AppRadii.pill,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppIcon(
+                    HugeIcons.strokeRoundedClock01,
+                    size: 17,
+                    color: AppColors.blue,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_arriveBy ? l10n.arriveBy : l10n.leaveAt}: ${_routeTimeLabel(l10n)}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(width: 5),
+                  AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
+                    size: 15,
+                    color: AppColors.textMuted(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 54,
+            height: 48,
             child: ElevatedButton(
               onPressed: _loadingRoute ? null : _findRoute,
               style: ElevatedButton.styleFrom(
@@ -1338,6 +1395,139 @@ class _SavePlaceSheetState extends State<_SavePlaceSheet> {
   }
 }
 
+class _RouteTimeSelection {
+  const _RouteTimeSelection({required this.time, required this.arriveBy});
+  final DateTime time;
+  final bool arriveBy;
+}
+
+class _RouteTimeSheet extends StatefulWidget {
+  const _RouteTimeSheet({required this.initialTime, required this.arriveBy});
+  final DateTime initialTime;
+  final bool arriveBy;
+
+  @override
+  State<_RouteTimeSheet> createState() => _RouteTimeSheetState();
+}
+
+class _RouteTimeSheetState extends State<_RouteTimeSheet> {
+  late DateTime _time = widget.initialTime;
+  late bool _arriveBy = widget.arriveBy;
+
+  Future<void> _chooseDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _time,
+      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+    );
+    if (date == null || !mounted) return;
+    setState(
+      () => _time = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        _time.hour,
+        _time.minute,
+      ),
+    );
+  }
+
+  Future<void> _chooseTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_time),
+    );
+    if (time == null || !mounted) return;
+    setState(
+      () => _time = DateTime(
+        _time.year,
+        _time.month,
+        _time.day,
+        time.hour,
+        time.minute,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.lineOf(context),
+              borderRadius: AppRadii.pill,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(value: false, label: Text(l10n.leaveAt)),
+              ButtonSegment(value: true, label: Text(l10n.arriveBy)),
+            ],
+            selected: {_arriveBy},
+            onSelectionChanged: (value) =>
+                setState(() => _arriveBy = value.first),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _chooseDate,
+                  child: Text(
+                    '${_time.day.toString().padLeft(2, '0')}.${_time.month.toString().padLeft(2, '0')}',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _chooseTime,
+                  child: Text(
+                    '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(
+                context,
+                _RouteTimeSelection(time: _time, arriveBy: _arriveBy),
+              ),
+              child: Text(l10n.saveTime),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Suggestions extends StatelessWidget {
   const _Suggestions({
     required this.suggestions,
@@ -1381,22 +1571,52 @@ class _Suggestions extends StatelessWidget {
   );
 }
 
-class _JourneyResults extends StatelessWidget {
+class _JourneyResults extends StatefulWidget {
   const _JourneyResults({
-    required this.journeys,
+    required this.page,
     required this.fromName,
     required this.toName,
+    required this.from,
+    required this.to,
+    this.time,
+    this.arriveBy = false,
   });
-  final List<JourneyOption> journeys;
+  final JourneyPage page;
   final String fromName;
   final String toName;
+  final String from;
+  final String to;
+  final DateTime? time;
+  final bool arriveBy;
+
+  @override
+  State<_JourneyResults> createState() => _JourneyResultsState();
+}
+
+class _JourneyResultsState extends State<_JourneyResults> {
+  late JourneyPage _page = widget.page;
+  bool _loading = false;
+
+  Future<void> _loadPage(String cursor) async {
+    setState(() => _loading = true);
+    try {
+      final page = await RuszajApi().journeyPage(
+        from: widget.from,
+        to: widget.to,
+        time: widget.time,
+        arriveBy: widget.arriveBy,
+        pageCursor: cursor,
+      );
+      if (mounted) setState(() => _page = page);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final visible = journeys
-        .where((journey) => journey.departure.isAfter(DateTime.now()))
-        .toList();
+    final journeys = _page.journeys;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -1428,7 +1648,7 @@ class _JourneyResults extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          '$fromName  →  $toName',
+                          '${widget.fromName}  →  ${widget.toName}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: AppColors.textMuted(context)),
@@ -1439,8 +1659,38 @@ class _JourneyResults extends StatelessWidget {
                 ],
               ),
             ),
+            if (_page.previousPageCursor != null ||
+                _page.nextPageCursor != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _loading || _page.previousPageCursor == null
+                          ? null
+                          : () => _loadPage(_page.previousPageCursor!),
+                      icon: const AppIcon(
+                        HugeIcons.strokeRoundedArrowLeft01,
+                        size: 17,
+                      ),
+                      label: Text(l10n.earlier),
+                    ),
+                    TextButton.icon(
+                      onPressed: _loading || _page.nextPageCursor == null
+                          ? null
+                          : () => _loadPage(_page.nextPageCursor!),
+                      icon: const AppIcon(
+                        HugeIcons.strokeRoundedArrowRight01,
+                        size: 17,
+                      ),
+                      label: Text(l10n.later),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
-              child: visible.isEmpty
+              child: journeys.isEmpty
                   ? Center(
                       child: Text(
                         l10n.noUpcomingJourneys,
@@ -1449,16 +1699,22 @@ class _JourneyResults extends StatelessWidget {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      itemCount: visible.length,
+                      itemCount: journeys.length,
                       itemBuilder: (context, index) {
-                        final journey = visible[index];
+                        final journey = journeys[index];
+                        final isPast = journey.departure.isBefore(
+                          DateTime.now(),
+                        );
+                        final textColor = isPast
+                            ? AppColors.textMuted(context)
+                            : Theme.of(context).colorScheme.onSurface;
                         return GestureDetector(
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => _JourneyDetail(
                                 journey: journey,
-                                fromName: fromName,
-                                toName: toName,
+                                fromName: widget.fromName,
+                                toName: widget.toName,
                               ),
                             ),
                           ),
@@ -1466,7 +1722,10 @@ class _JourneyResults extends StatelessWidget {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
+                              color: isPast
+                                  ? Theme.of(context).colorScheme.surface
+                                        .withValues(alpha: 0.55)
+                                  : Theme.of(context).colorScheme.surface,
                               borderRadius: AppRadii.field,
                             ),
                             child: Column(
@@ -1476,7 +1735,8 @@ class _JourneyResults extends StatelessWidget {
                                   children: [
                                     Text(
                                       _departureLabel(journey.departure, l10n),
-                                      style: const TextStyle(
+                                      style: TextStyle(
+                                        color: textColor,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 18,
                                       ),
@@ -1493,7 +1753,8 @@ class _JourneyResults extends StatelessWidget {
                                     ),
                                     Text(
                                       _time(journey.arrival),
-                                      style: const TextStyle(
+                                      style: TextStyle(
+                                        color: textColor,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 18,
                                       ),
@@ -1502,7 +1763,9 @@ class _JourneyResults extends StatelessWidget {
                                     Text(
                                       '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
                                       style: TextStyle(
-                                        color: AppColors.textMuted(context),
+                                        color: isPast
+                                            ? AppColors.textMuted(context)
+                                            : AppColors.textMuted(context),
                                       ),
                                     ),
                                   ],
@@ -1522,7 +1785,9 @@ class _JourneyResults extends StatelessWidget {
                                       ? l10n.transit
                                       : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
                                   style: TextStyle(
-                                    color: AppColors.textMuted(context),
+                                    color: isPast
+                                        ? AppColors.textMuted(context)
+                                        : AppColors.textMuted(context),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -1543,7 +1808,13 @@ class _JourneyResults extends StatelessWidget {
       '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
   String _departureLabel(DateTime departure, AppLocalizations l10n) {
-    final minutes = departure.difference(DateTime.now()).inMinutes;
+    final difference = departure.difference(DateTime.now());
+    if (difference.isNegative) {
+      final minutes = difference.inMinutes.abs();
+      if (minutes < 5) return '-${minutes == 0 ? 1 : minutes} ${l10n.minutes}';
+      return l10n.departed;
+    }
+    final minutes = difference.inMinutes;
     if (minutes < 60) return l10n.inMinutes(minutes);
     return _time(departure);
   }
