@@ -920,7 +920,7 @@ class _JourneyCardState extends State<_JourneyCard> {
   }
 }
 
-class _PlaceField extends StatelessWidget {
+class _PlaceField extends StatefulWidget {
   const _PlaceField({
     required this.label,
     required this.hint,
@@ -943,12 +943,55 @@ class _PlaceField extends StatelessWidget {
   final VoidCallback? onFieldTap;
 
   @override
+  State<_PlaceField> createState() => _PlaceFieldState();
+}
+
+class _PlaceFieldState extends State<_PlaceField> {
+  late bool _hasText = widget.controller.text.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PlaceField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+      _sync();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() => _sync();
+
+  void _sync() {
+    final hasText = widget.controller.text.isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
+
+  void _clear() {
+    widget.controller.clear();
+    widget.onChanged('');
+  }
+
+  @override
   Widget build(BuildContext context) => Row(
     children: [
       Container(
         width: 10,
         height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
       ),
       const SizedBox(width: 13),
       Expanded(
@@ -956,7 +999,7 @@ class _PlaceField extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label.toUpperCase(),
+              widget.label.toUpperCase(),
               style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
@@ -966,13 +1009,13 @@ class _PlaceField extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             TextField(
-              controller: controller,
-              focusNode: focusNode,
-              onChanged: onChanged,
-              onTap: onFieldTap,
-              onTapOutside: (_) => focusNode?.unfocus(),
+              controller: widget.controller,
+              focusNode: widget.focusNode,
+              onChanged: widget.onChanged,
+              onTap: widget.onFieldTap,
+              onTapOutside: (_) => widget.focusNode?.unfocus(),
               decoration: InputDecoration(
-                hintText: hint,
+                hintText: widget.hint,
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -985,14 +1028,24 @@ class _PlaceField extends StatelessWidget {
           ],
         ),
       ),
-      GestureDetector(
-        onTap: onTap,
-        child: AppIcon(
-          trailing ?? HugeIcons.strokeRoundedSearch01,
-          size: 19,
-          color: AppColors.subtle,
+      if (_hasText)
+        GestureDetector(
+          onTap: _clear,
+          child: AppIcon(
+            HugeIcons.strokeRoundedCancel01,
+            size: 20,
+            color: AppColors.textMuted(context),
+          ),
+        )
+      else
+        GestureDetector(
+          onTap: widget.onTap,
+          child: AppIcon(
+            widget.trailing ?? HugeIcons.strokeRoundedSearch01,
+            size: 19,
+            color: AppColors.subtle,
+          ),
         ),
-      ),
     ],
   );
 }
