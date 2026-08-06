@@ -1013,7 +1013,6 @@ class _PlaceFieldState extends State<_PlaceField> {
               focusNode: widget.focusNode,
               onChanged: widget.onChanged,
               onTap: widget.onFieldTap,
-              onTapOutside: (_) => widget.focusNode?.unfocus(),
               decoration: InputDecoration(
                 hintText: widget.hint,
                 border: InputBorder.none,
