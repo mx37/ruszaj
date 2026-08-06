@@ -6,6 +6,7 @@ import { healthRoutes } from './routes/health.js';
 import { journeyRoutes } from './routes/journey.js';
 import { searchRoutes } from './routes/search.js';
 import { stopRoutes } from './routes/stops.js';
+import { reverseGeocodeRoutes } from './routes/reverse-geocode.js';
 
 export function buildApp(config: Config, deps?: { fetch?: typeof globalThis.fetch }): FastifyInstance {
   const app = Fastify({
@@ -44,6 +45,7 @@ export function buildApp(config: Config, deps?: { fetch?: typeof globalThis.fetc
   app.register(journeyRoutes, { prefix: '/v1/journeys', transitous });
   app.register(stopRoutes, { prefix: '/v1/stops', transitous });
   app.register(searchRoutes, { prefix: '/v1/search', transitous });
+  app.register(reverseGeocodeRoutes, { prefix: '/v1', transitous });
 
   return app;
 }

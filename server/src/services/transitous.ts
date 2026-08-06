@@ -2,6 +2,7 @@ import {
   geocode as motisGeocode,
   health as motisHealth,
   plan as motisPlan,
+  reverseGeocode as motisReverseGeocode,
   stopInfo as motisStopInfo,
   stops as motisStops,
   stoptimes as motisStoptimes,
@@ -48,6 +49,7 @@ export interface TransitousService {
   getStop(stopId: string): Promise<StopDetails>;
   getDepartures(params: DeparturesParams): Promise<DeparturesResult>;
   search(params: SearchParams): Promise<SearchResult[]>;
+  reverseGeocode(lat: number, lon: number): Promise<SearchResult[]>;
 }
 
 /**
@@ -177,7 +179,58 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
         })
         .map(toSearchResult);
     },
+
+    async reverseGeocode(lat: number, lon: number): Promise<SearchResult[]> {
+      const nominatim = await reverseWithOpenStreetMap(lat, lon, config.userAgent);
+      if (nominatim) return [nominatim];
+
+      const res = await motisReverseGeocode({
+        ...requestOptions,
+        throwOnError: true,
+        query: {
+          place: `${lat},${lon}`,
+          numResults: 5,
+          type: ['ADDRESS', 'PLACE', 'STOP'],
+        },
+      });
+      return res.data.map(toSearchResult);
+    },
   };
+}
+
+async function reverseWithOpenStreetMap(
+  lat: number,
+  lon: number,
+  userAgent: string,
+): Promise<SearchResult | null> {
+  try {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lon));
+    url.searchParams.set('format', 'jsonv2');
+    url.searchParams.set('zoom', '18');
+    url.searchParams.set('addressdetails', '1');
+    const response = await fetch(url, { headers: { 'User-Agent': userAgent } });
+    if (!response.ok) return null;
+    const data = (await response.json()) as {
+      display_name?: string;
+      address?: { road?: string; house_number?: string; city?: string; town?: string; village?: string };
+    };
+    const address = data.address;
+    if (!data.display_name || !address?.road) return null;
+    const houseNumber = address.house_number ? ` ${address.house_number}` : '';
+    const locality = address.city ?? address.town ?? address.village;
+    return {
+      id: `osm:${lat},${lon}`,
+      name: `${address.road}${houseNumber}`,
+      type: 'ADDRESS',
+      coordinates: { lat, lon },
+      ...(locality ? { country: locality } : {}),
+      score: 1,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function toSearchResult(match: Match): SearchResult {
