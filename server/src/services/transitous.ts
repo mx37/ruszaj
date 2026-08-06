@@ -93,7 +93,7 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
       return {
         from: toJourneyStop(res.data.from),
         to: toJourneyStop(res.data.to),
-        journeys: res.data.itineraries.map(toJourney),
+        journeys: (params.walkingOnly ? res.data.direct : res.data.itineraries).map(toJourney),
         ...(res.data.previousPageCursor ? { previousPageCursor: res.data.previousPageCursor } : {}),
         ...(res.data.nextPageCursor ? { nextPageCursor: res.data.nextPageCursor } : {}),
       };
