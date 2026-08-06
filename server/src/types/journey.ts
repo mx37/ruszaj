@@ -1,7 +1,4 @@
-export interface Coordinates {
-  lat: number;
-  lon: number;
-}
+import { type Coordinates } from './common.js';
 
 export interface JourneyStop {
   id: string;
