@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,11 +81,40 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
   String _city = 'Warszawa';
   final _locationService = LocationService();
+  List<Map<String, String>> _recentRoutes = [];
 
   @override
   void initState() {
     super.initState();
     _loadCity();
+    _loadRecentRoutes();
+  }
+
+  Future<void> _loadRecentRoutes() async {
+    final preferences = await SharedPreferences.getInstance();
+    final raw = preferences.getStringList('recent_routes') ?? [];
+    if (!mounted) return;
+    setState(() {
+      _recentRoutes = raw
+          .map((item) => Map<String, String>.from(jsonDecode(item) as Map))
+          .toList();
+    });
+  }
+
+  Future<void> _saveRecentRoute(String from, String to) async {
+    final route = {'from': from, 'to': to};
+    final routes = [
+      route,
+      ..._recentRoutes.where(
+        (item) => item['from'] != from || item['to'] != to,
+      ),
+    ].take(5).toList();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      'recent_routes',
+      routes.map(jsonEncode).toList(),
+    );
+    if (mounted) setState(() => _recentRoutes = routes);
   }
 
   Future<void> _loadCity() async {
@@ -121,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 18),
                         _JourneyCard(
                           onUseLocation: _useCurrentLocation,
+                          onSaved: _saveRecentRoute,
                           city: _city,
                         ),
                         const SizedBox(height: 32),
@@ -132,7 +163,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _RecentEmpty(text: l10n.noRecentRoutes),
+                        if (_recentRoutes.isEmpty)
+                          _RecentEmpty(text: l10n.noRecentRoutes)
+                        else
+                          for (final route in _recentRoutes)
+                            _RecentRoute(
+                              from: route['from'] ?? '',
+                              to: route['to'] ?? '',
+                            ),
                       ],
                     ]),
                   ),
@@ -186,33 +224,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _useCurrentLocation() async {
+  Future<String?> _useCurrentLocation() async {
     final l10n = AppLocalizations.of(context);
     try {
       final position = await _locationService.currentPosition();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
-            ),
-          ),
-        );
-      }
+      return '${position.latitude},${position.longitude}';
     } on LocationException catch (error) {
-      if (!mounted) return;
+      if (!mounted) return null;
       final message = error.code == 'permission-denied-forever'
           ? l10n.locationUnavailable
           : l10n.locationPermissionNeeded;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+      return null;
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.locationUnavailable)));
       }
+      return null;
     }
   }
 }
@@ -274,8 +306,13 @@ class _Header extends StatelessWidget {
 }
 
 class _JourneyCard extends StatefulWidget {
-  const _JourneyCard({required this.onUseLocation, required this.city});
-  final VoidCallback onUseLocation;
+  const _JourneyCard({
+    required this.onUseLocation,
+    required this.onSaved,
+    required this.city,
+  });
+  final Future<String?> Function() onUseLocation;
+  final Future<void> Function(String from, String to) onSaved;
   final String city;
 
   @override
@@ -356,6 +393,23 @@ class _JourneyCardState extends State<_JourneyCard> {
     });
   }
 
+  Future<void> _fillCurrentLocation(bool isFrom) async {
+    final value = await widget.onUseLocation();
+    if (!mounted || value == null) return;
+    final controller = isFrom ? _fromController : _toController;
+    controller.text = value;
+    setState(() {
+      if (isFrom) {
+        _fromValue = value;
+        _editingFrom = true;
+      } else {
+        _toValue = value;
+        _editingFrom = false;
+      }
+      _suggestions = [];
+    });
+  }
+
   Future<void> _findRoute() async {
     final l10n = AppLocalizations.of(context);
     if ((_fromValue ?? _fromController.text).trim().isEmpty ||
@@ -371,6 +425,7 @@ class _JourneyCardState extends State<_JourneyCard> {
         from: _fromValue ?? _fromController.text,
         to: _toValue ?? _toController.text,
       );
+      await widget.onSaved(_fromController.text, _toController.text);
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
@@ -408,7 +463,7 @@ class _JourneyCardState extends State<_JourneyCard> {
             hint: l10n.whereAreYouStarting,
             color: AppColors.blue,
             trailing: HugeIcons.strokeRoundedLocation01,
-            onTap: widget.onUseLocation,
+            onTap: () => _fillCurrentLocation(true),
             controller: _fromController,
             onChanged: (value) => _onQueryChanged(value, true),
             onFieldTap: () => setState(() => _editingFrom = true),
@@ -433,6 +488,8 @@ class _JourneyCardState extends State<_JourneyCard> {
             color: AppColors.green,
             controller: _toController,
             onChanged: (value) => _onQueryChanged(value, false),
+            trailing: HugeIcons.strokeRoundedLocation01,
+            onTap: () => _fillCurrentLocation(false),
             onFieldTap: () => setState(() => _editingFrom = false),
           ),
           if (_suggestions.isNotEmpty || _searching)
@@ -567,6 +624,48 @@ class _RecentEmpty extends StatelessWidget {
           child: Text(
             text,
             style: const TextStyle(color: AppColors.muted, height: 1.4),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _RecentRoute extends StatelessWidget {
+  const _RecentRoute({required this.from, required this.to});
+  final String from;
+  final String to;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(16),
+    decoration: const BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: AppRadii.field,
+    ),
+    child: Row(
+      children: [
+        const AppIcon(HugeIcons.strokeRoundedRoute01, color: AppColors.blue),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                from,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                to,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppColors.muted),
+              ),
+            ],
           ),
         ),
       ],
