@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:hugeicons/hugeicons.dart';
 import '../data/ruszaj_api.dart';
@@ -14,6 +16,213 @@ class WalkToStopPage extends StatefulWidget {
 
   @override
   State<WalkToStopPage> createState() => _WalkToStopPageState();
+}
+
+class JourneyRouteMap extends StatefulWidget {
+  const JourneyRouteMap({
+    super.key,
+    required this.journey,
+    required this.fromName,
+    required this.toName,
+  });
+  final JourneyOption journey;
+  final String fromName;
+  final String toName;
+
+  @override
+  State<JourneyRouteMap> createState() => _JourneyRouteMapState();
+}
+
+class _JourneyRouteMapState extends State<JourneyRouteMap> {
+  final _location = LocationService();
+  StreamSubscription<Position>? _subscription;
+  LatLng? _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _startLocationTracking();
+  }
+
+  Future<void> _startLocationTracking() async {
+    try {
+      final position = await _location.currentPosition();
+      if (!mounted) return;
+      setState(() => _current = LatLng(position.latitude, position.longitude));
+      _subscription =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.best,
+              distanceFilter: 5,
+            ),
+          ).listen((position) {
+            if (mounted) {
+              setState(
+                () => _current = LatLng(position.latitude, position.longitude),
+              );
+            }
+          });
+    } catch (_) {
+      // Route remains visible when location permission is unavailable.
+    }
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final points = widget.journey.legs
+        .expand(
+          (leg) =>
+              decodePolyline(leg.geometry ?? '', leg.geometryPrecision ?? 6),
+        )
+        .toList();
+    final fallback = points.isNotEmpty
+        ? points
+        : const [LatLng(52.2297, 21.0122), LatLng(52.2310, 21.0101)];
+    final end = fallback.last;
+    final distance = _current == null
+        ? null
+        : Distance().as(LengthUnit.Meter, _current!, end).round();
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+              child: Row(
+                children: [
+                  const AppIcon(
+                    HugeIcons.strokeRoundedMaps,
+                    size: 24,
+                    color: AppColors.blue,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.transit,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                        Text(
+                          '${widget.fromName} → ${widget.toName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: fallback[fallback.length ~/ 2],
+                  initialZoom: 14.2,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'dev.ruszaj.ruszaj',
+                  ),
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: fallback,
+                        color: AppColors.blue,
+                        strokeWidth: 5,
+                      ),
+                    ],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: fallback.first,
+                        width: 48,
+                        height: 48,
+                        child: const _MapMarker(
+                          icon: HugeIcons.strokeRoundedLocation01,
+                          color: AppColors.blue,
+                        ),
+                      ),
+                      Marker(
+                        point: end,
+                        width: 48,
+                        height: 48,
+                        child: const _MapMarker(
+                          icon: HugeIcons.strokeRoundedBus01,
+                          color: AppColors.green,
+                        ),
+                      ),
+                      if (_current != null)
+                        Marker(
+                          point: _current!,
+                          width: 54,
+                          height: 54,
+                          child: const _MapMarker(
+                            icon: HugeIcons.strokeRoundedNavigation03,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 15, 20, 22),
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Row(
+                children: [
+                  const AppIcon(
+                    HugeIcons.strokeRoundedNavigation03,
+                    color: AppColors.blue,
+                    size: 27,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      distance == null
+                          ? l10n.locationUnavailable
+                          : '$distance m',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.walkTo,
+                    style: const TextStyle(color: AppColors.muted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _WalkToStopPageState extends State<WalkToStopPage> {

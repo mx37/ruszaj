@@ -1058,91 +1058,100 @@ class _JourneyDetail extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const AppIcon(
-                        HugeIcons.strokeRoundedArrowLeft01,
-                        size: 26,
-                      ),
+        child: PageView(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const AppIcon(
+                            HugeIcons.strokeRoundedArrowLeft01,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                fromName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                toName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            fromName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            _time(journey.departure),
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            toName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: AppColors.muted,
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: AppIcon(
+                              HugeIcons.strokeRoundedArrowRight01,
+                              color: AppColors.subtle,
                             ),
+                          ),
+                          Text(
+                            _time(journey.arrival),
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                            style: const TextStyle(color: AppColors.muted),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _time(journey.departure),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: AppIcon(
-                          HugeIcons.strokeRoundedArrowRight01,
-                          color: AppColors.subtle,
-                        ),
-                      ),
-                      Text(
-                        _time(journey.arrival),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
-                        style: const TextStyle(color: AppColors.muted),
-                      ),
-                    ],
+                      const SizedBox(height: 22),
+                      for (final leg in journey.legs)
+                        _DetailLeg(leg: leg, l10n: l10n),
+                    ]),
                   ),
-                  const SizedBox(height: 22),
-                  for (final leg in journey.legs)
-                    _DetailLeg(leg: leg, l10n: l10n),
-                ]),
-              ),
+                ),
+              ],
+            ),
+            JourneyRouteMap(
+              journey: journey,
+              fromName: fromName,
+              toName: toName,
             ),
           ],
         ),
