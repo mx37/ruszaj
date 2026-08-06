@@ -43,5 +43,11 @@
   "mapLoading": "Wyznaczanie trasy pieszej...",
   "mapRouteUnavailable": "Trasa piesza niedostępna"
   ,"lightTheme": "Jasny"
-  ,"darkTheme": "Ciemny"
+  ,"darkTheme": "Ciemny",
+  "savePlace": "Zapisz miejsce",
+  "name": "Nazwa",
+  "icon": "Ikona",
+  "save": "Zapisz",
+  "savedPlaces": "Zapisane miejsca",
+  "recentPlaces": "Ostatnie miejsca"
 }

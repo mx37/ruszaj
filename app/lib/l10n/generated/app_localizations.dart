@@ -361,6 +361,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get darkTheme;
+
+  /// No description provided for @savePlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Save place'**
+  String get savePlace;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @icon.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get icon;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @savedPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved places'**
+  String get savedPlaces;
+
+  /// No description provided for @recentPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent places'**
+  String get recentPlaces;
 }
 
 class _AppLocalizationsDelegate

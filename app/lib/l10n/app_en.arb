@@ -43,5 +43,11 @@
   "mapLoading": "Building walking route...",
   "mapRouteUnavailable": "Walking route unavailable"
   ,"lightTheme": "Light"
-  ,"darkTheme": "Dark"
+  ,"darkTheme": "Dark",
+  "savePlace": "Save place",
+  "name": "Name",
+  "icon": "Icon",
+  "save": "Save",
+  "savedPlaces": "Saved places",
+  "recentPlaces": "Recent places"
 }

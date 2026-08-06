@@ -140,4 +140,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get darkTheme => 'Dark';
+
+  @override
+  String get savePlace => 'Save place';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get icon => 'Icon';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get savedPlaces => 'Saved places';
+
+  @override
+  String get recentPlaces => 'Recent places';
 }

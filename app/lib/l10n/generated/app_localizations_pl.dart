@@ -140,4 +140,22 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get darkTheme => 'Ciemny';
+
+  @override
+  String get savePlace => 'Zapisz miejsce';
+
+  @override
+  String get name => 'Nazwa';
+
+  @override
+  String get icon => 'Ikona';
+
+  @override
+  String get save => 'Zapisz';
+
+  @override
+  String get savedPlaces => 'Zapisane miejsca';
+
+  @override
+  String get recentPlaces => 'Ostatnie miejsca';
 }
