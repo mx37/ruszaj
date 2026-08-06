@@ -63,6 +63,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearance => 'Appearance';
 
   @override
+  String get dataSources => 'Data sources';
+
+  @override
+  String get transitousSources => 'Transitous and OpenStreetMap sources';
+
+  @override
   String get english => 'English';
 
   @override

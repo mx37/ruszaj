@@ -63,6 +63,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get appearance => 'Wygląd';
 
   @override
+  String get dataSources => 'Źródła danych';
+
+  @override
+  String get transitousSources => 'Źródła Transitous i OpenStreetMap';
+
+  @override
   String get english => 'English';
 
   @override
