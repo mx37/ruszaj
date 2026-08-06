@@ -302,6 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final preferences = await SharedPreferences.getInstance();
       await preferences.setString('city', selected);
       setState(() => _city = selected);
+      await _loadRecentRoutes();
     }
   }
 
