@@ -29,4 +29,21 @@ export const stopRoutes: FastifyPluginAsync<{ transitous: TransitousService }> =
       return transitous.getNearbyStops({ lat, lon, radius, limit });
     },
   });
+
+  app.get('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id'],
+        properties: {
+          id: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+    handler: async (request) => {
+      const { id } = request.params as { id: string };
+      return transitous.getStop(id);
+    },
+  });
 };

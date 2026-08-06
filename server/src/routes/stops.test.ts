@@ -56,3 +56,64 @@ describe('GET /v1/stops/nearby', () => {
     await app.close();
   });
 });
+
+describe('GET /v1/stops/:id', () => {
+  it('returns stop details with routes', async () => {
+    const fetchMock = vi.fn(async (input: Request | URL | string) => {
+      const url = input instanceof Request ? input.url : String(input);
+      expect(url).toContain('/api/v6/stop?');
+      return new Response(
+        JSON.stringify({
+          place: {
+            name: 'Warszawa Centralna',
+            stopId: 'pl-wawa:7010',
+            parentId: 'pl-wawa',
+            lat: 52.2287,
+            lon: 21.0056,
+            stopCode: 'WAR',
+            tz: 'Europe/Warsaw',
+            modes: ['RAIL'],
+          },
+          routes: [
+            {
+              routeId: 'route-1',
+              routeShortName: 'EIP 1',
+              routeLongName: 'Intercity',
+              mode: 'RAIL',
+              agencyId: 'a1',
+              agencyName: 'PKP Intercity',
+              agencyUrl: 'https://example.com',
+              routeColor: '#FF0000',
+            },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    });
+    const app = buildApp(loadConfig({}), { fetch: fetchMock });
+
+    const res = await app.inject({ method: 'GET', url: '/v1/stops/pl-wawa%3A7010' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      id: 'pl-wawa:7010',
+      name: 'Warszawa Centralna',
+      coordinates: { lat: 52.2287, lon: 21.0056 },
+      parentId: 'pl-wawa',
+      stopCode: 'WAR',
+      tz: 'Europe/Warsaw',
+      modes: ['RAIL'],
+      routes: [
+        {
+          id: 'route-1',
+          shortName: 'EIP 1',
+          longName: 'Intercity',
+          mode: 'RAIL',
+          agencyName: 'PKP Intercity',
+          routeColor: '#FF0000',
+        },
+      ],
+    });
+    await app.close();
+  });
+});

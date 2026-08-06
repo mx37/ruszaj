@@ -1,11 +1,13 @@
 import {
   health as motisHealth,
   plan as motisPlan,
+  stopInfo as motisStopInfo,
   stops as motisStops,
   type Itinerary,
   type Leg,
   type Mode,
   type Place,
+  type Route,
 } from '@motis-project/motis-client';
 import {
   type Journey,
@@ -14,7 +16,7 @@ import {
   type JourneyStop,
   type JourneysResult,
 } from '../types/journey.js';
-import { type NearbyStopsParams, type Stop } from '../types/stop.js';
+import { type NearbyStopsParams, type Stop, type StopDetails } from '../types/stop.js';
 
 export interface TransitousServiceConfig {
   baseUrl: string;
@@ -30,6 +32,7 @@ export interface TransitousService {
   isHealthy(): Promise<TransitousHealth>;
   searchJourneys(params: JourneySearchParams): Promise<JourneysResult>;
   getNearbyStops(params: NearbyStopsParams): Promise<Stop[]>;
+  getStop(stopId: string): Promise<StopDetails>;
 }
 
 /**
@@ -89,11 +92,35 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
       });
 
       const stops = res.data
-        .map((place) => toStop(place, params.lat, params.lon))
+        .map((place) => toStop(place, { lat: params.lat, lon: params.lon }))
         .sort((a, b) => (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity));
 
       return stops.slice(0, params.limit);
     },
+
+    async getStop(stopId: string): Promise<StopDetails> {
+      const res = await motisStopInfo({
+        ...requestOptions,
+        throwOnError: true,
+        query: { stopId, language: ['pl'] },
+      });
+
+      return {
+        ...toStop(res.data.place),
+        routes: res.data.routes.map(toStopRoute),
+      };
+    },
+  };
+}
+
+function toStopRoute(route: Route): StopDetails['routes'][number] {
+  return {
+    id: route.routeId,
+    shortName: route.routeShortName,
+    longName: route.routeLongName,
+    mode: route.mode,
+    agencyName: route.agencyName,
+    ...(route.routeColor ? { routeColor: route.routeColor } : {}),
   };
 }
 
@@ -117,7 +144,7 @@ function haversineMeters(lat1: number, lon1: number, lat2: number, lon2: number)
   return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function toStop(place: Place, refLat: number, refLon: number): Stop {
+function toStop(place: Place, ref?: { lat: number; lon: number }): Stop {
   return {
     id: place.stopId ?? '',
     name: place.name,
@@ -127,7 +154,9 @@ function toStop(place: Place, refLat: number, refLon: number): Stop {
     ...(place.level !== undefined ? { level: place.level } : {}),
     ...(place.tz ? { tz: place.tz } : {}),
     ...(place.modes && place.modes.length > 0 ? { modes: place.modes } : {}),
-    distanceMeters: Math.round(haversineMeters(refLat, refLon, place.lat, place.lon)),
+    ...(ref
+      ? { distanceMeters: Math.round(haversineMeters(ref.lat, ref.lon, place.lat, place.lon)) }
+      : {}),
   };
 }
 

@@ -18,3 +18,16 @@ export interface NearbyStopsParams {
   radius: number;
   limit: number;
 }
+
+export interface StopRoute {
+  id: string;
+  shortName: string;
+  longName: string;
+  mode: string;
+  agencyName: string;
+  routeColor?: string;
+}
+
+export interface StopDetails extends Stop {
+  routes: StopRoute[];
+}
