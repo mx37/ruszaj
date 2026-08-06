@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'location/location_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_icon.dart';
 import 'widgets/floating_nav.dart';
@@ -75,6 +76,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
   String _city = 'Warszawa';
+  final _locationService = LocationService();
 
   @override
   void initState() {
@@ -111,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const _JourneyCard(),
+                      _JourneyCard(onUseLocation: _useCurrentLocation),
                       const SizedBox(height: 32),
                       Text(
                         l10n.recentRoutes,
@@ -173,6 +175,36 @@ class _HomeScreenState extends State<HomeScreen> {
           _SettingsSheet(l10n: l10n, onLocaleChanged: widget.onLocaleChanged),
     );
   }
+
+  Future<void> _useCurrentLocation() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final position = await _locationService.currentPosition();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
+            ),
+          ),
+        );
+      }
+    } on LocationException catch (error) {
+      if (!mounted) return;
+      final message = error.code == 'permission-denied-forever'
+          ? l10n.locationUnavailable
+          : l10n.locationPermissionNeeded;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.locationUnavailable)));
+      }
+    }
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -232,7 +264,8 @@ class _Header extends StatelessWidget {
 }
 
 class _JourneyCard extends StatelessWidget {
-  const _JourneyCard();
+  const _JourneyCard({required this.onUseLocation});
+  final VoidCallback onUseLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +282,8 @@ class _JourneyCard extends StatelessWidget {
             label: l10n.from,
             hint: l10n.whereAreYouStarting,
             color: AppColors.blue,
+            trailing: HugeIcons.strokeRoundedLocation01,
+            onTap: onUseLocation,
           ),
           Padding(
             padding: const EdgeInsets.only(left: 18),
@@ -303,10 +338,14 @@ class _PlaceField extends StatelessWidget {
     required this.label,
     required this.hint,
     required this.color,
+    this.trailing,
+    this.onTap,
   });
   final String label;
   final String hint;
   final Color color;
+  final List<List<dynamic>>? trailing;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -338,10 +377,13 @@ class _PlaceField extends StatelessWidget {
           ],
         ),
       ),
-      const AppIcon(
-        HugeIcons.strokeRoundedSearch01,
-        size: 19,
-        color: AppColors.subtle,
+      GestureDetector(
+        onTap: onTap,
+        child: AppIcon(
+          trailing ?? HugeIcons.strokeRoundedSearch01,
+          size: 19,
+          color: AppColors.subtle,
+        ),
       ),
     ],
   );
