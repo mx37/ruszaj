@@ -11,6 +11,7 @@ import 'widgets/floating_nav.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'data/ruszaj_api.dart';
 import 'map/walk_to_stop_page.dart';
+import 'settings/settings_page.dart';
 
 void main() => runApp(const RuszajApp());
 
@@ -23,11 +24,31 @@ class RuszajApp extends StatefulWidget {
 
 class _RuszajAppState extends State<RuszajApp> {
   Locale? _locale;
+  ThemeMode _themeMode = ThemeMode.system;
 
   @override
   void initState() {
     super.initState();
     _loadLocale();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final preferences = await SharedPreferences.getInstance();
+    final value = preferences.getString('theme_mode');
+    if (!mounted || value == null) return;
+    setState(
+      () => _themeMode = value == 'dark' ? ThemeMode.dark : ThemeMode.light,
+    );
+  }
+
+  Future<void> _setThemeMode(ThemeMode mode) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      'theme_mode',
+      mode == ThemeMode.dark ? 'dark' : 'light',
+    );
+    if (mounted) setState(() => _themeMode = mode);
   }
 
   Future<void> _loadLocale() async {
@@ -48,6 +69,8 @@ class _RuszajAppState extends State<RuszajApp> {
       title: 'Ruszaj',
       debugShowCheckedModeBanner: false,
       theme: appTheme(),
+      darkTheme: appTheme(brightness: Brightness.dark),
+      themeMode: _themeMode,
       locale: _locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -63,15 +86,29 @@ class _RuszajAppState extends State<RuszajApp> {
           orElse: () => supported.first,
         );
       },
-      home: HomeScreen(onLocaleChanged: _setLocale),
+      home: HomeScreen(
+        locale: _locale,
+        themeMode: _themeMode,
+        onLocaleChanged: _setLocale,
+        onThemeChanged: _setThemeMode,
+      ),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onLocaleChanged});
+  const HomeScreen({
+    super.key,
+    required this.locale,
+    required this.themeMode,
+    required this.onLocaleChanged,
+    required this.onThemeChanged,
+  });
 
+  final Locale? locale;
+  final ThemeMode themeMode;
   final ValueChanged<Locale> onLocaleChanged;
+  final ValueChanged<ThemeMode> onThemeChanged;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -215,12 +252,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _showSettings() async {
-    final l10n = AppLocalizations.of(context);
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          _SettingsSheet(l10n: l10n, onLocaleChanged: widget.onLocaleChanged),
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (context) => SettingsPage(
+          locale: widget.locale,
+          themeMode: widget.themeMode,
+          onLocaleChanged: widget.onLocaleChanged,
+          onThemeChanged: widget.onThemeChanged,
+        ),
+      ),
     );
   }
 
@@ -728,87 +768,6 @@ class _CitySheet extends StatelessWidget {
           ),
       ],
     ),
-  );
-}
-
-class _SettingsSheet extends StatelessWidget {
-  const _SettingsSheet({required this.l10n, required this.onLocaleChanged});
-  final AppLocalizations l10n;
-  final ValueChanged<Locale> onLocaleChanged;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-    decoration: const BoxDecoration(
-      color: AppColors.canvas,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.line,
-              borderRadius: AppRadii.pill,
-            ),
-          ),
-        ),
-        const SizedBox(height: 22),
-        Text(
-          l10n.settings,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          l10n.language,
-          style: const TextStyle(
-            color: AppColors.muted,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        _LanguageOption(
-          label: l10n.english,
-          locale: const Locale('en'),
-          onChanged: onLocaleChanged,
-        ),
-        _LanguageOption(
-          label: l10n.polish,
-          locale: const Locale('pl'),
-          onChanged: onLocaleChanged,
-        ),
-      ],
-    ),
-  );
-}
-
-class _LanguageOption extends StatelessWidget {
-  const _LanguageOption({
-    required this.label,
-    required this.locale,
-    required this.onChanged,
-  });
-  final String label;
-  final Locale locale;
-  final ValueChanged<Locale> onChanged;
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    title: Text(label),
-    trailing: const AppIcon(
-      HugeIcons.strokeRoundedArrowRight01,
-      size: 18,
-      color: AppColors.subtle,
-    ),
-    onTap: () {
-      onChanged(locale);
-      Navigator.pop(context);
-    },
   );
 }
 

@@ -19,19 +19,27 @@ abstract final class AppRadii {
   static const pill = BorderRadius.all(Radius.circular(999));
 }
 
-ThemeData appTheme() {
-  final base = ThemeData.light(useMaterial3: false);
+ThemeData appTheme({Brightness brightness = Brightness.light}) {
+  final base = brightness == Brightness.dark
+      ? ThemeData.dark(useMaterial3: false)
+      : ThemeData.light(useMaterial3: false);
   return base.copyWith(
-    scaffoldBackgroundColor: AppColors.canvas,
+    scaffoldBackgroundColor: brightness == Brightness.dark
+        ? const Color(0xFF0B1017)
+        : AppColors.canvas,
     colorScheme: base.colorScheme.copyWith(
       primary: AppColors.blue,
       onPrimary: Colors.white,
-      surface: AppColors.surface,
-      onSurface: AppColors.ink,
+      surface: brightness == Brightness.dark
+          ? const Color(0xFF151C25)
+          : AppColors.surface,
+      onSurface: brightness == Brightness.dark ? Colors.white : AppColors.ink,
     ),
     textTheme: base.textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+      bodyColor: brightness == Brightness.dark ? Colors.white : AppColors.ink,
+      displayColor: brightness == Brightness.dark
+          ? Colors.white
+          : AppColors.ink,
       fontFamily: 'Arial',
     ),
     splashFactory: NoSplash.splashFactory,

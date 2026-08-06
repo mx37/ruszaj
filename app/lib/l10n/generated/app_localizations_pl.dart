@@ -134,4 +134,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get mapRouteUnavailable => 'Trasa piesza niedostępna';
+
+  @override
+  String get lightTheme => 'Jasny';
+
+  @override
+  String get darkTheme => 'Ciemny';
 }

@@ -42,4 +42,6 @@
   "youAreHere": "Jesteś tutaj",
   "mapLoading": "Wyznaczanie trasy pieszej...",
   "mapRouteUnavailable": "Trasa piesza niedostępna"
+  ,"lightTheme": "Jasny"
+  ,"darkTheme": "Ciemny"
 }

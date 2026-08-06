@@ -42,4 +42,6 @@
   "youAreHere": "You are here",
   "mapLoading": "Building walking route...",
   "mapRouteUnavailable": "Walking route unavailable"
+  ,"lightTheme": "Light"
+  ,"darkTheme": "Dark"
 }
