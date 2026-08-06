@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/ruszaj_api.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../location/location_service.dart';
@@ -67,6 +68,14 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
     }
   }
 
+  Future<void> _openMaps(LatLng origin, LatLng destination) async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}'
+      '&destination=${destination.latitude},${destination.longitude}&travelmode=walking',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();
@@ -76,19 +85,33 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final points = widget.journey.legs
+    final firstTransitIndex = widget.journey.legs.indexWhere(
+      (leg) => leg.mode != 'WALK',
+    );
+    final accessLegs = firstTransitIndex < 0
+        ? widget.journey.legs
+        : widget.journey.legs.take(firstTransitIndex).toList();
+    final points = accessLegs
         .expand(
           (leg) =>
               decodePolyline(leg.geometry ?? '', leg.geometryPrecision ?? 6),
         )
         .toList();
-    final fallback = points.isNotEmpty
-        ? points
-        : const [LatLng(52.2297, 21.0122), LatLng(52.2310, 21.0101)];
-    final end = fallback.last;
+    final firstLeg = accessLegs.isEmpty ? null : accessLegs.first;
+    final boardingLeg = firstTransitIndex < 0
+        ? null
+        : widget.journey.legs[firstTransitIndex];
+    final origin = firstLeg?.fromLat != null && firstLeg?.fromLon != null
+        ? LatLng(firstLeg!.fromLat!, firstLeg.fromLon!)
+        : (points.isNotEmpty ? points.first : const LatLng(52.2297, 21.0122));
+    final boardingStop =
+        boardingLeg?.fromLat != null && boardingLeg?.fromLon != null
+        ? LatLng(boardingLeg!.fromLat!, boardingLeg.fromLon!)
+        : (points.isNotEmpty ? points.last : const LatLng(52.2310, 21.0101));
+    final fallback = points.isNotEmpty ? points : [origin, boardingStop];
     final distance = _current == null
         ? null
-        : Distance().as(LengthUnit.Meter, _current!, end).round();
+        : Distance().as(LengthUnit.Meter, _current!, boardingStop).round();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -109,7 +132,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          l10n.transit,
+                          l10n.walkTo,
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textMuted(context),
@@ -125,6 +148,15 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _openMaps(origin, boardingStop),
+                    tooltip: l10n.openInMaps,
+                    icon: const AppIcon(
+                      HugeIcons.strokeRoundedNavigation03,
+                      size: 21,
+                      color: AppColors.blue,
                     ),
                   ),
                 ],
@@ -154,7 +186,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                   MarkerLayer(
                     markers: [
                       Marker(
-                        point: fallback.first,
+                        point: origin,
                         width: 48,
                         height: 48,
                         child: const _MapMarker(
@@ -163,7 +195,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                         ),
                       ),
                       Marker(
-                        point: end,
+                        point: boardingStop,
                         width: 48,
                         height: 48,
                         child: const _MapMarker(
