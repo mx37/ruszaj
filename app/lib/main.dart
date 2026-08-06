@@ -1,122 +1,364 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/generated/app_localizations.dart';
+import 'theme/app_theme.dart';
+import 'widgets/app_icon.dart';
+import 'widgets/floating_nav.dart';
+import 'package:hugeicons/hugeicons.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const RuszajApp());
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RuszajApp extends StatelessWidget {
+  const RuszajApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'Ruszaj',
+      debugShowCheckedModeBanner: false,
+      theme: appTheme(),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (locale, supported) {
+        if (locale == null) return supported.first;
+        return supported.firstWhere(
+          (item) => item.languageCode == locale.languageCode,
+          orElse: () => supported.first,
+        );
+      },
+      home: const HomeScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedTab = 0;
+  String _city = 'Warszawa';
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+      body: SafeArea(
+        child: Stack(
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 140),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _Header(city: _city, onCityTap: _chooseCity),
+                      const SizedBox(height: 34),
+                      Text(
+                        l10n.appTagline,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const _JourneyCard(),
+                      const SizedBox(height: 32),
+                      Text(
+                        l10n.recentRoutes,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _RecentEmpty(text: l10n.noRecentRoutes),
+                    ]),
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 16,
+              child: Center(
+                child: FloatingNav(
+                  selectedIndex: _selectedTab,
+                  onSelected: (index) => setState(() => _selectedTab = index),
+                ),
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+
+  Future<void> _chooseCity() async {
+    final l10n = AppLocalizations.of(context);
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CitySheet(title: l10n.selectCity),
+    );
+    if (selected != null && mounted) setState(() => _city = selected);
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.city, required this.onCityTap});
+  final String city;
+  final VoidCallback onCityTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      children: [
+        const Text(
+          'Ruszaj',
+          style: TextStyle(
+            fontSize: 27,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: onCityTap,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AppIcon(
+                HugeIcons.strokeRoundedBuilding03,
+                size: 18,
+                color: AppColors.blue,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                city,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 5),
+              const AppIcon(
+                HugeIcons.strokeRoundedArrowDown01,
+                size: 17,
+                color: AppColors.muted,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.chooseCity,
+          style: const TextStyle(fontSize: 12, color: AppColors.subtle),
+        ),
+      ],
+    );
+  }
+}
+
+class _JourneyCard extends StatelessWidget {
+  const _JourneyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.card,
+      ),
+      child: Column(
+        children: [
+          _PlaceField(
+            label: l10n.from,
+            hint: l10n.whereAreYouStarting,
+            color: AppColors.blue,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 18),
+            child: Row(
+              children: [
+                Expanded(child: Container(height: 1, color: AppColors.line)),
+                const SizedBox(width: 10),
+                const AppIcon(
+                  HugeIcons.strokeRoundedArrowUpDown,
+                  size: 19,
+                  color: AppColors.muted,
+                ),
+              ],
+            ),
+          ),
+          _PlaceField(
+            label: l10n.to,
+            hint: l10n.whereAreYouGoing,
+            color: AppColors.green,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadii.pill,
+                ),
+              ),
+              child: Text(
+                l10n.findRoute,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _PlaceField extends StatelessWidget {
+  const _PlaceField({
+    required this.label,
+    required this.hint,
+    required this.color,
+  });
+  final String label;
+  final String hint;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 13),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: AppColors.subtle,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              hint,
+              style: const TextStyle(fontSize: 17, color: AppColors.muted),
+            ),
+          ],
+        ),
+      ),
+      const AppIcon(
+        HugeIcons.strokeRoundedSearch01,
+        size: 19,
+        color: AppColors.subtle,
+      ),
+    ],
+  );
+}
+
+class _RecentEmpty extends StatelessWidget {
+  const _RecentEmpty({required this.text});
+  final String text;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      border: Border.all(color: AppColors.line),
+      borderRadius: AppRadii.card,
+    ),
+    child: Row(
+      children: [
+        const AppIcon(HugeIcons.strokeRoundedClock01, color: AppColors.subtle),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: AppColors.muted, height: 1.4),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _CitySheet extends StatelessWidget {
+  const _CitySheet({required this.title});
+  final String title;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
+    decoration: const BoxDecoration(
+      color: AppColors.canvas,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36,
+          height: 4,
+          decoration: BoxDecoration(
+            color: AppColors.line,
+            borderRadius: AppRadii.pill,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          ),
+        ),
+        const SizedBox(height: 14),
+        for (final city in [
+          'Warszawa',
+          'Kraków',
+          'Gdańsk',
+          'Wrocław',
+          'Poznań',
+        ])
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(city),
+            trailing: const AppIcon(
+              HugeIcons.strokeRoundedArrowRight01,
+              size: 18,
+              color: AppColors.subtle,
+            ),
+            onTap: () => Navigator.pop(context, city),
+          ),
+      ],
+    ),
+  );
 }
