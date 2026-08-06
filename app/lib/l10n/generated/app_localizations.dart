@@ -509,7 +509,7 @@ abstract class AppLocalizations {
   /// No description provided for @defaultApiDomain.
   ///
   /// In en, this message translates to:
-  /// **'Default local server'**
+  /// **'Default: ruszaj.mx37.me'**
   String get defaultApiDomain;
 
   /// No description provided for @version.

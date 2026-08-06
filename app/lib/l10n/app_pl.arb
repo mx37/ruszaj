@@ -75,6 +75,6 @@
   ,"connection": "Połączenie"
   ,"apiDomain": "Domena API"
   ,"apiDomainHint": "https://api.example.com"
-  ,"defaultApiDomain": "Domyślny lokalny serwer"
+  ,"defaultApiDomain": "Domyślnie: ruszaj.mx37.me"
   ,"version": "Wersja"
 }
