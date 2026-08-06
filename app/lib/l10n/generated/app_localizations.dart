@@ -289,6 +289,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refresh;
+
+  /// No description provided for @searchUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Search unavailable'**
+  String get searchUnavailable;
 }
 
 class _AppLocalizationsDelegate

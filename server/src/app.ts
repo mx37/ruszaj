@@ -18,6 +18,13 @@ export function buildApp(config: Config, deps?: { fetch?: typeof globalThis.fetc
     ...(deps?.fetch ? { fetch: deps.fetch } : {}),
   });
 
+  app.addHook('onResponse', async (request, reply) => {
+    request.log.info(
+      { statusCode: reply.statusCode, responseTimeMs: reply.elapsedTime },
+      'request completed',
+    );
+  });
+
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof AppError) {
       return reply.code(error.statusCode).send({ error: { code: error.code, message: error.message } });

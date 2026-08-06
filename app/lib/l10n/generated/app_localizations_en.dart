@@ -104,4 +104,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refresh => 'Refresh';
+
+  @override
+  String get searchUnavailable => 'Search unavailable';
 }

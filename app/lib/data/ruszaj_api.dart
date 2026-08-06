@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SearchPlace {
@@ -97,19 +98,24 @@ class RuszajApi {
     : _client = client ?? http.Client(),
       _baseUrl =
           baseUrl ??
-          const String.fromEnvironment(
-            'RUSZAJ_API_URL',
-            defaultValue: 'http://10.0.2.2:8080',
-          );
+          const String.fromEnvironment('RUSZAJ_API_URL', defaultValue: '');
 
   final http.Client _client;
   final String _baseUrl;
+  static const _timeout = Duration(seconds: 8);
+
+  String get _effectiveBaseUrl {
+    if (_baseUrl.isNotEmpty) return _baseUrl;
+    return defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8080'
+        : 'http://127.0.0.1:8080';
+  }
 
   Future<List<SearchPlace>> search(String query, {int limit = 8}) async {
     final uri = Uri.parse(
-      '$_baseUrl/v1/search',
+      '$_effectiveBaseUrl/v1/search',
     ).replace(queryParameters: {'q': query, 'limit': '$limit'});
-    final response = await _client.get(uri);
+    final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as List;
     return data
@@ -122,9 +128,9 @@ class RuszajApi {
     required String to,
   }) async {
     final uri = Uri.parse(
-      '$_baseUrl/v1/journeys',
+      '$_effectiveBaseUrl/v1/journeys',
     ).replace(queryParameters: {'from': from, 'to': to});
-    final response = await _client.get(uri);
+    final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return (data['journeys'] as List)
@@ -137,9 +143,9 @@ class RuszajApi {
     required double lon,
   }) async {
     final uri = Uri.parse(
-      '$_baseUrl/v1/stops/nearby',
+      '$_effectiveBaseUrl/v1/stops/nearby',
     ).replace(queryParameters: {'lat': '$lat', 'lon': '$lon', 'limit': '20'});
-    final response = await _client.get(uri);
+    final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as List;
     return data

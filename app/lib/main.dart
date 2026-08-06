@@ -288,6 +288,7 @@ class _JourneyCardState extends State<_JourneyCard> {
   bool _searching = false;
   bool _loadingRoute = false;
   bool _editingFrom = true;
+  int _searchRequestId = 0;
 
   @override
   void dispose() {
@@ -305,18 +306,32 @@ class _JourneyCardState extends State<_JourneyCard> {
     }
     _debounce?.cancel();
     if (value.trim().length < 2) {
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+      });
       return;
     }
+    final requestId = ++_searchRequestId;
     _debounce = Timer(const Duration(milliseconds: 350), () async {
-      setState(() => _searching = true);
+      if (!mounted) return;
+      setState(() {
+        _searching = true;
+      });
       try {
         final results = await _api.search(value.trim());
-        if (mounted) setState(() => _suggestions = results);
+        if (mounted && requestId == _searchRequestId) {
+          setState(() => _suggestions = results);
+        }
       } catch (_) {
-        if (mounted) setState(() => _suggestions = []);
+        if (mounted && requestId == _searchRequestId) {
+          setState(() {
+            _suggestions = [];
+          });
+        }
       } finally {
-        if (mounted) setState(() => _searching = false);
+        if (mounted && requestId == _searchRequestId) {
+          setState(() => _searching = false);
+        }
       }
     });
   }
@@ -586,6 +601,12 @@ class _CitySheet extends StatelessWidget {
           'Gdańsk',
           'Wrocław',
           'Poznań',
+          'Bydgoszcz',
+          'Toruń',
+          'Łódź',
+          'Katowice',
+          'Lublin',
+          'Szczecin',
         ])
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -701,7 +722,7 @@ class _Suggestions extends StatelessWidget {
       borderRadius: AppRadii.field,
     ),
     child: searching
-        ? const Padding(
+        ? Padding(
             padding: EdgeInsets.all(14),
             child: Align(
               alignment: Alignment.centerLeft,

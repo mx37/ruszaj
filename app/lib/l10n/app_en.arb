@@ -31,5 +31,6 @@
   "noRoute": "No route found",
   "requestFailed": "Could not load results",
   "nearbyTitle": "Nearby stops",
-  "refresh": "Refresh"
+  "refresh": "Refresh",
+  "searchUnavailable": "Search unavailable"
 }

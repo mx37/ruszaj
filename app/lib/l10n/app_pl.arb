@@ -31,5 +31,6 @@
   "noRoute": "Nie znaleziono trasy",
   "requestFailed": "Nie udało się pobrać wyników",
   "nearbyTitle": "Przystanki w pobliżu",
-  "refresh": "Odśwież"
+  "refresh": "Odśwież",
+  "searchUnavailable": "Wyszukiwanie niedostępne"
 }

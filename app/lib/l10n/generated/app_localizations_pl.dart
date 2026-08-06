@@ -104,4 +104,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get refresh => 'Odśwież';
+
+  @override
+  String get searchUnavailable => 'Wyszukiwanie niedostępne';
 }
