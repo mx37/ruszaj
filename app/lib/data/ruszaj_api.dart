@@ -1,0 +1,127 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class SearchPlace {
+  const SearchPlace({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.lat,
+    required this.lon,
+  });
+  final String id;
+  final String name;
+  final String type;
+  final double lat;
+  final double lon;
+
+  factory SearchPlace.fromJson(Map<String, dynamic> json) => SearchPlace(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    type: json['type'] as String,
+    lat: (json['coordinates']['lat'] as num).toDouble(),
+    lon: (json['coordinates']['lon'] as num).toDouble(),
+  );
+}
+
+class JourneyOption {
+  const JourneyOption({
+    required this.id,
+    required this.departure,
+    required this.arrival,
+    required this.durationSeconds,
+    required this.transfers,
+    required this.legs,
+  });
+  final String id;
+  final DateTime departure;
+  final DateTime arrival;
+  final int durationSeconds;
+  final int transfers;
+  final List<JourneyLeg> legs;
+
+  factory JourneyOption.fromJson(Map<String, dynamic> json) => JourneyOption(
+    id: json['id'] as String,
+    departure: DateTime.parse(json['departure'] as String),
+    arrival: DateTime.parse(json['arrival'] as String),
+    durationSeconds: json['durationSeconds'] as int,
+    transfers: json['transfers'] as int,
+    legs: (json['legs'] as List)
+        .map((item) => JourneyLeg.fromJson(item as Map<String, dynamic>))
+        .toList(),
+  );
+}
+
+class JourneyLeg {
+  const JourneyLeg({
+    required this.mode,
+    required this.departure,
+    required this.arrival,
+    this.routeName,
+    this.headsign,
+  });
+  final String mode;
+  final DateTime departure;
+  final DateTime arrival;
+  final String? routeName;
+  final String? headsign;
+
+  factory JourneyLeg.fromJson(Map<String, dynamic> json) => JourneyLeg(
+    mode: json['mode'] as String,
+    departure: DateTime.parse(json['departure'] as String),
+    arrival: DateTime.parse(json['arrival'] as String),
+    routeName: json['routeShortName'] as String?,
+    headsign: json['headsign'] as String?,
+  );
+}
+
+class RuszajApi {
+  RuszajApi({http.Client? client, String? baseUrl})
+    : _client = client ?? http.Client(),
+      _baseUrl =
+          baseUrl ??
+          const String.fromEnvironment(
+            'RUSZAJ_API_URL',
+            defaultValue: 'http://10.0.2.2:8080',
+          );
+
+  final http.Client _client;
+  final String _baseUrl;
+
+  Future<List<SearchPlace>> search(String query, {int limit = 8}) async {
+    final uri = Uri.parse(
+      '$_baseUrl/v1/search',
+    ).replace(queryParameters: {'q': query, 'limit': '$limit'});
+    final response = await _client.get(uri);
+    _check(response);
+    final data = jsonDecode(response.body) as List;
+    return data
+        .map((item) => SearchPlace.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<JourneyOption>> journeys({
+    required String from,
+    required String to,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/v1/journeys',
+    ).replace(queryParameters: {'from': from, 'to': to});
+    final response = await _client.get(uri);
+    _check(response);
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return (data['journeys'] as List)
+        .map((item) => JourneyOption.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  void _check(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    throw RuszajApiException(response.statusCode);
+  }
+}
+
+class RuszajApiException implements Exception {
+  const RuszajApiException(this.statusCode);
+  final int statusCode;
+}
