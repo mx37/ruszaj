@@ -24,6 +24,26 @@ Ruszaj is designed to collect as little data as possible.
 
 Your saved places, favourites and preferences stay on your device. There are no advertising or analytics SDKs used to build a profile of you.
 
+## Self-hosting
+
+Ruszaj comes with a default public server at `ruszaj.mx37.me` so you can try
+the app without setting anything up. It proxies requests to Transitous and
+doesn't store or log anything about you.
+
+That said, **self-hosting is recommended** if you want full control over
+your data path. The backend is a small TypeScript project, so it's genuinely
+easy:
+
+```bash
+git clone https://github.com/mx37/ruszaj
+cd ruszaj/server
+npm install
+npm start
+```
+
+That's it - no API keys, no tokens, no accounts to set up. Just point the app
+at your own server URL in Settings.
+
 ## Status
 
 Ruszaj is currently in early development.
