@@ -131,13 +131,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadRecentRoutes() async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getStringList('recent_routes') ?? [];
+    final routes = <Map<String, String>>[];
+    final keys = <String>{};
+    for (final item in raw) {
+      final route = Map<String, String>.from(jsonDecode(item) as Map);
+      if (keys.add(_routeKey(route))) routes.add(route);
+    }
+    if (routes.length != raw.length || routes.length > 5) {
+      await preferences.setStringList(
+        'recent_routes',
+        routes.take(5).map(jsonEncode).toList(),
+      );
+    }
     if (!mounted) return;
-    setState(() {
-      _recentRoutes = raw
-          .map((item) => Map<String, String>.from(jsonDecode(item) as Map))
-          .toList();
-    });
+    setState(() => _recentRoutes = routes.take(5).toList());
   }
+
+  String _routeKey(Map<String, String> route) =>
+      '${(route['fromValue'] ?? route['from'] ?? '').trim()}|'
+      '${(route['toValue'] ?? route['to'] ?? '').trim()}';
 
   Future<void> _saveRecentRoute(
     String from,
@@ -153,9 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
     };
     final routes = [
       route,
-      ..._recentRoutes.where(
-        (item) => item['fromValue'] != fromValue || item['toValue'] != toValue,
-      ),
+      ..._recentRoutes.where((item) => _routeKey(item) != _routeKey(route)),
     ].take(5).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
@@ -358,12 +368,27 @@ class _Header extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Column(
       children: [
-        const Text(
-          'Ruszaj',
-          style: TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -1,
+        Text.rich(
+          TextSpan(
+            children: [
+              const TextSpan(
+                text: 'R',
+                style: TextStyle(color: AppColors.blue),
+              ),
+              TextSpan(
+                text: 'uszaj',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+          style: const TextStyle(
+            fontSize: 30,
+            fontWeight: FontWeight.w900,
+            fontStyle: FontStyle.italic,
+            letterSpacing: -1.5,
+            height: 1,
           ),
         ),
         const SizedBox(height: 12),
@@ -494,61 +519,63 @@ class _JourneyCardState extends State<_JourneyCard> {
   Future<void> _loadRecentPlaces() async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getStringList('recent_places') ?? [];
+    final places = <SearchPlace>[];
+    final keys = <String>{};
+    for (final item in raw) {
+      final json = jsonDecode(item) as Map<String, dynamic>;
+      final place = SearchPlace(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        type: json['type'] as String,
+        lat: (json['lat'] as num).toDouble(),
+        lon: (json['lon'] as num).toDouble(),
+      );
+      if (keys.add(_placeKey(place))) places.add(place);
+    }
+    if (places.length != raw.length || places.length > 8) {
+      await _persistRecentPlaces(places);
+    }
     if (!mounted) return;
-    setState(() {
-      _recentPlaces = raw.map((item) {
-        final json = jsonDecode(item) as Map<String, dynamic>;
-        return SearchPlace(
-          id: json['id'] as String,
-          name: json['name'] as String,
-          type: json['type'] as String,
-          lat: (json['lat'] as num).toDouble(),
-          lon: (json['lon'] as num).toDouble(),
-        );
-      }).toList();
-    });
+    setState(() => _recentPlaces = places.take(8).toList());
+  }
+
+  String _placeKey(SearchPlace place) => place.id.isNotEmpty
+      ? 'id:${place.id}'
+      : 'geo:${place.lat.toStringAsFixed(5)},${place.lon.toStringAsFixed(5)}';
+
+  Future<void> _persistRecentPlaces(List<SearchPlace> places) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      'recent_places',
+      places
+          .take(8)
+          .map(
+            (item) => jsonEncode({
+              'id': item.id,
+              'name': item.name,
+              'type': item.type,
+              'lat': item.lat,
+              'lon': item.lon,
+            }),
+          )
+          .toList(),
+    );
   }
 
   Future<void> _rememberPlace(SearchPlace place) async {
     final places = [
       place,
-      ..._recentPlaces.where((item) => item.id != place.id),
+      ..._recentPlaces.where((item) => _placeKey(item) != _placeKey(place)),
     ].take(8).toList();
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setStringList(
-      'recent_places',
-      places
-          .map(
-            (item) => jsonEncode({
-              'id': item.id,
-              'name': item.name,
-              'type': item.type,
-              'lat': item.lat,
-              'lon': item.lon,
-            }),
-          )
-          .toList(),
-    );
+    await _persistRecentPlaces(places);
     if (mounted) setState(() => _recentPlaces = places);
   }
 
   Future<void> _deleteRecentPlace(SearchPlace place) async {
-    final places = _recentPlaces.where((item) => item.id != place.id).toList();
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setStringList(
-      'recent_places',
-      places
-          .map(
-            (item) => jsonEncode({
-              'id': item.id,
-              'name': item.name,
-              'type': item.type,
-              'lat': item.lat,
-              'lon': item.lon,
-            }),
-          )
-          .toList(),
-    );
+    final places = _recentPlaces
+        .where((item) => _placeKey(item) != _placeKey(place))
+        .toList();
+    await _persistRecentPlaces(places);
     if (mounted) setState(() => _recentPlaces = places);
   }
 
@@ -626,6 +653,19 @@ class _JourneyCardState extends State<_JourneyCard> {
     _selectPlace(place, isFrom);
   }
 
+  void _swapPlaces() {
+    final fromText = _fromController.text;
+    final fromValue = _fromValue;
+    setState(() {
+      _fromController.text = _toController.text;
+      _toController.text = fromText;
+      _fromValue = _toValue;
+      _toValue = fromValue;
+      _suggestions = [];
+      _fieldFocused = false;
+    });
+  }
+
   String _placeValue(SearchPlace place) =>
       place.type == 'STOP' ? place.id : '${place.lat},${place.lon}';
 
@@ -675,7 +715,7 @@ class _JourneyCardState extends State<_JourneyCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: AppRadii.card,
@@ -693,17 +733,24 @@ class _JourneyCardState extends State<_JourneyCard> {
             onFieldTap: () => _activateField(true),
           ),
           Padding(
-            padding: const EdgeInsets.only(left: 18),
+            padding: const EdgeInsets.only(left: 23),
             child: Row(
               children: [
                 Expanded(
                   child: Container(height: 1, color: AppColors.lineOf(context)),
                 ),
-                const SizedBox(width: 10),
-                AppIcon(
-                  HugeIcons.strokeRoundedArrowUpDown,
-                  size: 19,
-                  color: AppColors.textMuted(context),
+                IconButton(
+                  onPressed: _swapPlaces,
+                  tooltip: l10n.swapPlaces,
+                  visualDensity: VisualDensity.compact,
+                  icon: AppIcon(
+                    HugeIcons.strokeRoundedArrowUpDown,
+                    size: 21,
+                    color: AppColors.textMuted(context),
+                  ),
+                ),
+                Expanded(
+                  child: Container(height: 1, color: AppColors.lineOf(context)),
                 ),
               ],
             ),
