@@ -118,6 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedTab = 0;
   String _city = 'Warszawa';
   final _locationService = LocationService();
+  final _api = RuszajApi();
   List<Map<String, String>> _recentRoutes = [];
 
   @override
@@ -138,12 +139,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _saveRecentRoute(String from, String to) async {
-    final route = {'from': from, 'to': to};
+  Future<void> _saveRecentRoute(
+    String from,
+    String to,
+    String fromValue,
+    String toValue,
+  ) async {
+    final route = {
+      'from': from,
+      'to': to,
+      'fromValue': fromValue,
+      'toValue': toValue,
+    };
     final routes = [
       route,
       ..._recentRoutes.where(
-        (item) => item['from'] != from || item['to'] != to,
+        (item) => item['fromValue'] != fromValue || item['toValue'] != toValue,
       ),
     ].take(5).toList();
     final preferences = await SharedPreferences.getInstance();
@@ -152,6 +163,31 @@ class _HomeScreenState extends State<HomeScreen> {
       routes.map(jsonEncode).toList(),
     );
     if (mounted) setState(() => _recentRoutes = routes);
+  }
+
+  Future<void> _openRecentRoute(Map<String, String> route) async {
+    final from = route['fromValue'] ?? route['from'] ?? '';
+    final to = route['toValue'] ?? route['to'] ?? '';
+    if (from.isEmpty || to.isEmpty) return;
+    try {
+      final journeys = await _api.journeys(from: from, to: to);
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (context) => _JourneyResults(
+            journeys: journeys,
+            fromName: route['from'] ?? from,
+            toName: route['to'] ?? to,
+          ),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).requestFailed)),
+        );
+      }
+    }
   }
 
   Future<void> _loadCity() async {
@@ -207,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _RecentRoute(
                               from: route['from'] ?? '',
                               to: route['to'] ?? '',
+                              onTap: () => _openRecentRoute(route),
                             ),
                       ],
                     ]),
@@ -352,7 +389,13 @@ class _JourneyCard extends StatefulWidget {
     required this.city,
   });
   final Future<String?> Function() onUseLocation;
-  final Future<void> Function(String from, String to) onSaved;
+  final Future<void> Function(
+    String from,
+    String to,
+    String fromValue,
+    String toValue,
+  )
+  onSaved;
   final String city;
 
   @override
@@ -367,10 +410,67 @@ class _JourneyCardState extends State<_JourneyCard> {
   String? _fromValue;
   String? _toValue;
   List<SearchPlace> _suggestions = [];
+  List<SearchPlace> _recentPlaces = [];
   bool _searching = false;
   bool _loadingRoute = false;
   bool _editingFrom = true;
   int _searchRequestId = 0;
+  bool _fieldFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentPlaces();
+  }
+
+  Future<void> _loadRecentPlaces() async {
+    final preferences = await SharedPreferences.getInstance();
+    final raw = preferences.getStringList('recent_places') ?? [];
+    if (!mounted) return;
+    setState(() {
+      _recentPlaces = raw.map((item) {
+        final json = jsonDecode(item) as Map<String, dynamic>;
+        return SearchPlace(
+          id: json['id'] as String,
+          name: json['name'] as String,
+          type: json['type'] as String,
+          lat: (json['lat'] as num).toDouble(),
+          lon: (json['lon'] as num).toDouble(),
+        );
+      }).toList();
+    });
+  }
+
+  Future<void> _rememberPlace(SearchPlace place) async {
+    final places = [
+      place,
+      ..._recentPlaces.where((item) => item.id != place.id),
+    ].take(8).toList();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      'recent_places',
+      places
+          .map(
+            (item) => jsonEncode({
+              'id': item.id,
+              'name': item.name,
+              'type': item.type,
+              'lat': item.lat,
+              'lon': item.lon,
+            }),
+          )
+          .toList(),
+    );
+    if (mounted) setState(() => _recentPlaces = places);
+  }
+
+  void _activateField(bool isFrom) {
+    setState(() {
+      _editingFrom = isFrom;
+      _fieldFocused = true;
+      _suggestions = [];
+    });
+  }
 
   @override
   void dispose() {
@@ -421,6 +521,7 @@ class _JourneyCardState extends State<_JourneyCard> {
   void _selectPlace(SearchPlace place, bool isFrom) {
     final controller = isFrom ? _fromController : _toController;
     controller.text = place.name;
+    _rememberPlace(place);
     setState(() {
       if (isFrom) {
         _fromValue = place.id.isNotEmpty
@@ -465,7 +566,12 @@ class _JourneyCardState extends State<_JourneyCard> {
         from: _fromValue ?? _fromController.text,
         to: _toValue ?? _toController.text,
       );
-      await widget.onSaved(_fromController.text, _toController.text);
+      await widget.onSaved(
+        _fromController.text,
+        _toController.text,
+        _fromValue ?? _fromController.text,
+        _toValue ?? _toController.text,
+      );
       if (!mounted) return;
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
@@ -506,7 +612,7 @@ class _JourneyCardState extends State<_JourneyCard> {
             onTap: () => _fillCurrentLocation(true),
             controller: _fromController,
             onChanged: (value) => _onQueryChanged(value, true),
-            onFieldTap: () => setState(() => _editingFrom = true),
+            onFieldTap: () => _activateField(true),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 18),
@@ -530,8 +636,16 @@ class _JourneyCardState extends State<_JourneyCard> {
             onChanged: (value) => _onQueryChanged(value, false),
             trailing: HugeIcons.strokeRoundedLocation01,
             onTap: () => _fillCurrentLocation(false),
-            onFieldTap: () => setState(() => _editingFrom = false),
+            onFieldTap: () => _activateField(false),
           ),
+          if (_fieldFocused &&
+              _suggestions.isEmpty &&
+              !_searching &&
+              _recentPlaces.isNotEmpty)
+            _RecentPlaces(
+              places: _recentPlaces,
+              onSelected: (place) => _selectPlace(place, _editingFrom),
+            ),
           if (_suggestions.isNotEmpty || _searching)
             _Suggestions(
               suggestions: _suggestions,
@@ -672,43 +786,51 @@ class _RecentEmpty extends StatelessWidget {
 }
 
 class _RecentRoute extends StatelessWidget {
-  const _RecentRoute({required this.from, required this.to});
+  const _RecentRoute({
+    required this.from,
+    required this.to,
+    required this.onTap,
+  });
   final String from;
   final String to;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
-    padding: const EdgeInsets.all(16),
-    decoration: const BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: AppRadii.field,
-    ),
-    child: Row(
-      children: [
-        const AppIcon(HugeIcons.strokeRoundedRoute01, color: AppColors.blue),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                from,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                to,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.muted),
-              ),
-            ],
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadii.field,
+      ),
+      child: Row(
+        children: [
+          const AppIcon(HugeIcons.strokeRoundedRoute01, color: AppColors.blue),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  from,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  to,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.muted),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
@@ -765,6 +887,40 @@ class _CitySheet extends StatelessWidget {
               color: AppColors.subtle,
             ),
             onTap: () => Navigator.pop(context, city),
+          ),
+      ],
+    ),
+  );
+}
+
+class _RecentPlaces extends StatelessWidget {
+  const _RecentPlaces({required this.places, required this.onSelected});
+  final List<SearchPlace> places;
+  final ValueChanged<SearchPlace> onSelected;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(top: 10),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: AppRadii.field,
+      border: Border.all(color: Theme.of(context).dividerColor),
+    ),
+    child: Column(
+      children: [
+        for (final place in places)
+          ListTile(
+            dense: true,
+            leading: AppIcon(
+              place.type == 'STOP'
+                  ? HugeIcons.strokeRoundedBus01
+                  : HugeIcons.strokeRoundedLocation01,
+              color: AppColors.blue,
+              size: 20,
+            ),
+            title: Text(place.name),
+            subtitle: Text(place.type),
+            onTap: () => onSelected(place),
           ),
       ],
     ),
