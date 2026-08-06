@@ -326,6 +326,12 @@ abstract class AppLocalizations {
   /// **'min'**
   String get minutes;
 
+  /// No description provided for @inMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'in {minutes} min'**
+  String inMinutes(int minutes);
+
   /// No description provided for @walkTo.
   ///
   /// In en, this message translates to:
@@ -397,6 +403,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent places'**
   String get recentPlaces;
+
+  /// No description provided for @noUpcomingJourneys.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming departures'**
+  String get noUpcomingJourneys;
 }
 
 class _AppLocalizationsDelegate

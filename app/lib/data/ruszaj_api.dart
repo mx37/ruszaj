@@ -43,8 +43,8 @@ class JourneyOption {
 
   factory JourneyOption.fromJson(Map<String, dynamic> json) => JourneyOption(
     id: json['id'] as String,
-    departure: DateTime.parse(json['departure'] as String),
-    arrival: DateTime.parse(json['arrival'] as String),
+    departure: DateTime.parse(json['departure'] as String).toLocal(),
+    arrival: DateTime.parse(json['arrival'] as String).toLocal(),
     durationSeconds: json['durationSeconds'] as int,
     transfers: json['transfers'] as int,
     legs: (json['legs'] as List)
@@ -79,8 +79,8 @@ class JourneyLeg {
 
   factory JourneyLeg.fromJson(Map<String, dynamic> json) => JourneyLeg(
     mode: json['mode'] as String,
-    departure: DateTime.parse(json['departure'] as String),
-    arrival: DateTime.parse(json['arrival'] as String),
+    departure: DateTime.parse(json['departure'] as String).toLocal(),
+    arrival: DateTime.parse(json['arrival'] as String).toLocal(),
     routeName: json['routeShortName'] as String?,
     headsign: json['headsign'] as String?,
     fromName: (json['from'] as Map<String, dynamic>?)?['name'] as String?,

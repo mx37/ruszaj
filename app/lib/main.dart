@@ -1332,6 +1332,9 @@ class _JourneyResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final visible = journeys
+        .where((journey) => journey.departure.isAfter(DateTime.now()))
+        .toList();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -1375,87 +1378,98 @@ class _JourneyResults extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                itemCount: journeys.length,
-                itemBuilder: (context, index) {
-                  final journey = journeys[index];
-                  return GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => _JourneyDetail(
-                          journey: journey,
-                          fromName: fromName,
-                          toName: toName,
-                        ),
+              child: visible.isEmpty
+                  ? Center(
+                      child: Text(
+                        l10n.noUpcomingJourneys,
+                        style: const TextStyle(color: AppColors.muted),
                       ),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: AppRadii.field,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                _time(journey.departure),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18,
-                                ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: visible.length,
+                      itemBuilder: (context, index) {
+                        final journey = visible[index];
+                        return GestureDetector(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => _JourneyDetail(
+                                journey: journey,
+                                fromName: fromName,
+                                toName: toName,
                               ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: AppIcon(
-                                  HugeIcons.strokeRoundedArrowRight01,
-                                  size: 17,
-                                  color: AppColors.subtle,
-                                ),
-                              ),
-                              Text(
-                                _time(journey.arrival),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
-                                style: const TextStyle(color: AppColors.muted),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 7,
-                            runSpacing: 7,
-                            children: [
-                              for (final leg in journey.legs)
-                                _ModeChip(leg: leg, l10n: l10n),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            journey.transfers == 0
-                                ? l10n.transit
-                                : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 13,
                             ),
                           ),
-                        ],
-                      ),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: AppRadii.field,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      _departureLabel(journey.departure, l10n),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                      ),
+                                      child: AppIcon(
+                                        HugeIcons.strokeRoundedArrowRight01,
+                                        size: 17,
+                                        color: AppColors.subtle,
+                                      ),
+                                    ),
+                                    Text(
+                                      _time(journey.arrival),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 7,
+                                  runSpacing: 7,
+                                  children: [
+                                    for (final leg in journey.legs)
+                                      _ModeChip(leg: leg, l10n: l10n),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  journey.transfers == 0
+                                      ? l10n.transit
+                                      : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
+                                  style: const TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -1465,6 +1479,12 @@ class _JourneyResults extends StatelessWidget {
 
   String _time(DateTime value) =>
       '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+  String _departureLabel(DateTime departure, AppLocalizations l10n) {
+    final minutes = departure.difference(DateTime.now()).inMinutes;
+    if (minutes < 60) return l10n.inMinutes(minutes);
+    return _time(departure);
+  }
 }
 
 class _ModeChip extends StatelessWidget {

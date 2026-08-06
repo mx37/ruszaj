@@ -124,6 +124,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get minutes => 'min';
 
   @override
+  String inMinutes(int minutes) {
+    return 'za $minutes min';
+  }
+
+  @override
   String get walkTo => 'Dojdź do przystanku';
 
   @override
@@ -158,4 +163,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get recentPlaces => 'Ostatnie miejsca';
+
+  @override
+  String get noUpcomingJourneys => 'Brak najbliższych odjazdów';
 }

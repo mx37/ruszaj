@@ -38,6 +38,14 @@
   "transfers": "transfers",
   "transfer": "transfer",
   "minutes": "min",
+  "inMinutes": "in {minutes} min",
+  "@inMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "walkTo": "Walk to stop",
   "youAreHere": "You are here",
   "mapLoading": "Building walking route...",
@@ -49,5 +57,6 @@
   "icon": "Icon",
   "save": "Save",
   "savedPlaces": "Saved places",
-  "recentPlaces": "Recent places"
+  "recentPlaces": "Recent places",
+  "noUpcomingJourneys": "No upcoming departures"
 }
