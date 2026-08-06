@@ -4,6 +4,8 @@ Ruszaj is a free and open-source public transport app for Poland.
 
 The idea is simple: make it easy to find routes, stops and departures without ads, tracking or unnecessary accounts.
 
+<img width="350" height="750" alt="Screenshot_20260807-004817" src="https://github.com/user-attachments/assets/5db31943-6d37-4e51-8ce4-7bab19a29670" />
+
 ## Goals
 
 * Plan public transport routes
