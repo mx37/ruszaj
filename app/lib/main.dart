@@ -464,6 +464,8 @@ class _JourneyCardState extends State<_JourneyCard> {
   final _api = RuszajApi();
   final _fromController = TextEditingController();
   final _toController = TextEditingController();
+  final _fromFocusNode = FocusNode();
+  final _toFocusNode = FocusNode();
   Timer? _debounce;
   String? _fromValue;
   String? _toValue;
@@ -483,6 +485,8 @@ class _JourneyCardState extends State<_JourneyCard> {
   @override
   void initState() {
     super.initState();
+    _fromFocusNode.addListener(() => _onFieldFocusChange(_fromFocusNode));
+    _toFocusNode.addListener(() => _onFieldFocusChange(_toFocusNode));
     _loadRecentPlaces();
     _loadSavedPlaces();
   }
@@ -608,11 +612,22 @@ class _JourneyCardState extends State<_JourneyCard> {
     });
   }
 
+  void _onFieldFocusChange(FocusNode node) {
+    if (!node.hasFocus && !_fromFocusNode.hasFocus && !_toFocusNode.hasFocus) {
+      setState(() {
+        _fieldFocused = false;
+        _suggestions = [];
+      });
+    }
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
     _fromController.dispose();
     _toController.dispose();
+    _fromFocusNode.dispose();
+    _toFocusNode.dispose();
     super.dispose();
   }
 
@@ -779,6 +794,7 @@ class _JourneyCardState extends State<_JourneyCard> {
             trailing: HugeIcons.strokeRoundedLocation01,
             onTap: () => _fillCurrentLocation(true),
             controller: _fromController,
+            focusNode: _fromFocusNode,
             onChanged: (value) => _onQueryChanged(value, true),
             onFieldTap: () => _activateField(true),
           ),
@@ -810,6 +826,7 @@ class _JourneyCardState extends State<_JourneyCard> {
             hint: l10n.whereAreYouGoing,
             color: AppColors.green,
             controller: _toController,
+            focusNode: _toFocusNode,
             onChanged: (value) => _onQueryChanged(value, false),
             trailing: HugeIcons.strokeRoundedLocation01,
             onTap: () => _fillCurrentLocation(false),
@@ -912,6 +929,7 @@ class _PlaceField extends StatelessWidget {
     this.onTap,
     required this.controller,
     required this.onChanged,
+    this.focusNode,
     this.onFieldTap,
   });
   final String label;
@@ -921,6 +939,7 @@ class _PlaceField extends StatelessWidget {
   final VoidCallback? onTap;
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final FocusNode? focusNode;
   final VoidCallback? onFieldTap;
 
   @override
@@ -948,8 +967,10 @@ class _PlaceField extends StatelessWidget {
             const SizedBox(height: 3),
             TextField(
               controller: controller,
+              focusNode: focusNode,
               onChanged: onChanged,
               onTap: onFieldTap,
+              onTapOutside: (_) => focusNode?.unfocus(),
               decoration: InputDecoration(
                 hintText: hint,
                 border: InputBorder.none,
