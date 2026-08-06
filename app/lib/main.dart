@@ -124,13 +124,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCity();
-    _loadRecentRoutes();
+    _loadData();
   }
+
+  Future<void> _loadData() async {
+    final preferences = await SharedPreferences.getInstance();
+    final city = preferences.getString('city');
+    if (mounted && city != null) setState(() => _city = city);
+    await _loadRecentRoutes();
+  }
+
+  String get _recentRoutesKey => 'recent_routes_$_city';
 
   Future<void> _loadRecentRoutes() async {
     final preferences = await SharedPreferences.getInstance();
-    final raw = preferences.getStringList('recent_routes') ?? [];
+    final raw = preferences.getStringList(_recentRoutesKey) ?? [];
     final routes = <Map<String, String>>[];
     final keys = <String>{};
     for (final item in raw) {
@@ -139,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (routes.length != raw.length || routes.length > 5) {
       await preferences.setStringList(
-        'recent_routes',
+        _recentRoutesKey,
         routes.take(5).map(jsonEncode).toList(),
       );
     }
@@ -169,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ].take(5).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
-      'recent_routes',
+      _recentRoutesKey,
       routes.map(jsonEncode).toList(),
     );
     if (mounted) setState(() => _recentRoutes = routes);
@@ -204,16 +212,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final routes = _recentRoutes.where((item) => item != route).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
-      'recent_routes',
+      _recentRoutesKey,
       routes.map(jsonEncode).toList(),
     );
     if (mounted) setState(() => _recentRoutes = routes);
-  }
-
-  Future<void> _loadCity() async {
-    final preferences = await SharedPreferences.getInstance();
-    final city = preferences.getString('city');
-    if (city != null && mounted) setState(() => _city = city);
   }
 
   @override
@@ -465,6 +467,8 @@ class _JourneyCardState extends State<_JourneyCard> {
   int _searchRequestId = 0;
   bool _fieldFocused = false;
 
+  String get _savedPlacesKey => 'saved_places_${widget.city}';
+
   @override
   void initState() {
     super.initState();
@@ -472,9 +476,15 @@ class _JourneyCardState extends State<_JourneyCard> {
     _loadSavedPlaces();
   }
 
+  @override
+  void didUpdateWidget(covariant _JourneyCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.city != widget.city) _loadSavedPlaces();
+  }
+
   Future<void> _loadSavedPlaces() async {
     final preferences = await SharedPreferences.getInstance();
-    final raw = preferences.getStringList('saved_places') ?? [];
+    final raw = preferences.getStringList(_savedPlacesKey) ?? [];
     if (!mounted) return;
     setState(() {
       _savedPlaces = raw
@@ -500,7 +510,7 @@ class _JourneyCardState extends State<_JourneyCard> {
     ].take(8).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
-      'saved_places',
+      _savedPlacesKey,
       places.map((item) => jsonEncode(item.toJson())).toList(),
     );
     if (mounted) setState(() => _savedPlaces = places);
@@ -510,7 +520,7 @@ class _JourneyCardState extends State<_JourneyCard> {
     final places = _savedPlaces.where((item) => item.key != place.key).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
-      'saved_places',
+      _savedPlacesKey,
       places.map((item) => jsonEncode(item.toJson())).toList(),
     );
     if (mounted) setState(() => _savedPlaces = places);
