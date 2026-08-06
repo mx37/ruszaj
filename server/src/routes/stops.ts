@@ -30,6 +30,38 @@ export const stopRoutes: FastifyPluginAsync<{ transitous: TransitousService }> =
     },
   });
 
+  app.get('/:id/departures', {
+    schema: {
+      params: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id'],
+        properties: {
+          id: { type: 'string', minLength: 1 },
+        },
+      },
+      querystring: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          time: { type: 'string', format: 'date-time' },
+          limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+          direction: { type: 'string', enum: ['EARLIER', 'LATER'] },
+        },
+      },
+    },
+    handler: async (request) => {
+      const { id } = request.params as { id: string };
+      const query = request.query as { time?: string; limit?: number; direction?: 'EARLIER' | 'LATER' };
+      return transitous.getDepartures({
+        stopId: id,
+        ...(query.time ? { time: query.time } : {}),
+        ...(query.limit !== undefined ? { limit: query.limit } : {}),
+        ...(query.direction ? { direction: query.direction } : {}),
+      });
+    },
+  });
+
   app.get('/:id', {
     schema: {
       params: {

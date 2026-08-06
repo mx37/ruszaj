@@ -117,3 +117,127 @@ describe('GET /v1/stops/:id', () => {
     await app.close();
   });
 });
+
+describe('GET /v1/stops/:id/departures', () => {
+  const stoptimesBody = {
+    stopTimes: [
+      {
+        place: {
+          name: 'Warszawa Centralna',
+          stopId: 'pl-wawa:7010',
+          lat: 52.2287,
+          lon: 21.0056,
+          departure: '2026-08-06T12:15:00+02:00',
+          scheduledDeparture: '2026-08-06T12:10:00+02:00',
+          track: '3',
+        },
+        mode: 'RAIL',
+        realTime: true,
+        headsign: 'Kraków Główny',
+        tripId: 'trip-1',
+        routeShortName: 'EIP 1',
+        routeLongName: 'Intercity',
+        displayName: 'EIP 1',
+        agencyName: 'PKP Intercity',
+        cancelled: false,
+        tripCancelled: false,
+        bikesAllowed: false,
+      },
+      {
+        place: {
+          name: 'Warszawa Centralna',
+          stopId: 'pl-wawa:7010',
+          lat: 52.2287,
+          lon: 21.0056,
+          departure: '2026-08-06T12:30:00+02:00',
+          scheduledDeparture: '2026-08-06T12:30:00+02:00',
+        },
+        mode: 'RAIL',
+        realTime: false,
+        headsign: 'Gdańsk Główny',
+        tripId: 'trip-2',
+        routeShortName: 'EIP 2',
+        routeLongName: 'Intercity',
+        displayName: 'EIP 2',
+        agencyName: 'PKP Intercity',
+        cancelled: true,
+        tripCancelled: true,
+        bikesAllowed: true,
+      },
+    ],
+    place: { name: 'Warszawa Centralna', stopId: 'pl-wawa:7010', lat: 52.2287, lon: 21.0056 },
+    previousPageCursor: '',
+    nextPageCursor: 'cursor-2',
+  };
+
+  it('maps MOTIS stoptimes to departures', async () => {
+    const fetchMock = vi.fn(async (input: Request | URL | string) => {
+      const url = input instanceof Request ? input.url : String(input);
+      expect(url).toContain('/api/v6/stoptimes');
+      return new Response(JSON.stringify(stoptimesBody), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const app = buildApp(loadConfig({}), { fetch: fetchMock });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/stops/pl-wawa%3A7010/departures?limit=5',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      stop: {
+        id: 'pl-wawa:7010',
+        name: 'Warszawa Centralna',
+        coordinates: { lat: 52.2287, lon: 21.0056 },
+      },
+      departures: [
+        {
+          mode: 'RAIL',
+          realTime: true,
+          headsign: 'Kraków Główny',
+          tripId: 'trip-1',
+          routeShortName: 'EIP 1',
+          routeLongName: 'Intercity',
+          displayName: 'EIP 1',
+          agencyName: 'PKP Intercity',
+          scheduledDeparture: '2026-08-06T12:10:00+02:00',
+          departure: '2026-08-06T12:15:00+02:00',
+          track: '3',
+          cancelled: false,
+          tripCancelled: false,
+          bikesAllowed: false,
+        },
+        {
+          mode: 'RAIL',
+          realTime: false,
+          headsign: 'Gdańsk Główny',
+          tripId: 'trip-2',
+          routeShortName: 'EIP 2',
+          routeLongName: 'Intercity',
+          displayName: 'EIP 2',
+          agencyName: 'PKP Intercity',
+          scheduledDeparture: '2026-08-06T12:30:00+02:00',
+          departure: '2026-08-06T12:30:00+02:00',
+          cancelled: true,
+          tripCancelled: true,
+          bikesAllowed: true,
+        },
+      ],
+      nextPageCursor: 'cursor-2',
+    });
+    await app.close();
+  });
+
+  it('rejects invalid direction', async () => {
+    const app = buildApp(loadConfig({}));
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/stops/pl-wawa%3A7010/departures?direction=SIDEWAYS',
+    });
+    expect(res.statusCode).toBe(400);
+    await app.close();
+  });
+});

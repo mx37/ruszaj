@@ -31,3 +31,34 @@ export interface StopRoute {
 export interface StopDetails extends Stop {
   routes: StopRoute[];
 }
+
+export interface Departure {
+  mode: string;
+  realTime: boolean;
+  headsign: string;
+  tripId: string;
+  routeShortName: string;
+  routeLongName: string;
+  displayName: string;
+  agencyName: string;
+  scheduledDeparture: string;
+  departure: string;
+  track?: string;
+  cancelled: boolean;
+  tripCancelled: boolean;
+  bikesAllowed: boolean;
+}
+
+export interface DeparturesParams {
+  stopId: string;
+  time?: string;
+  limit?: number;
+  direction?: 'EARLIER' | 'LATER';
+}
+
+export interface DeparturesResult {
+  stop: Stop;
+  departures: Departure[];
+  previousPageCursor?: string;
+  nextPageCursor?: string;
+}

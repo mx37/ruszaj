@@ -3,11 +3,13 @@ import {
   plan as motisPlan,
   stopInfo as motisStopInfo,
   stops as motisStops,
+  stoptimes as motisStoptimes,
   type Itinerary,
   type Leg,
   type Mode,
   type Place,
   type Route,
+  type StopTime,
 } from '@motis-project/motis-client';
 import {
   type Journey,
@@ -16,7 +18,14 @@ import {
   type JourneyStop,
   type JourneysResult,
 } from '../types/journey.js';
-import { type NearbyStopsParams, type Stop, type StopDetails } from '../types/stop.js';
+import {
+  type Departure,
+  type DeparturesParams,
+  type DeparturesResult,
+  type NearbyStopsParams,
+  type Stop,
+  type StopDetails,
+} from '../types/stop.js';
 
 export interface TransitousServiceConfig {
   baseUrl: string;
@@ -33,6 +42,7 @@ export interface TransitousService {
   searchJourneys(params: JourneySearchParams): Promise<JourneysResult>;
   getNearbyStops(params: NearbyStopsParams): Promise<Stop[]>;
   getStop(stopId: string): Promise<StopDetails>;
+  getDepartures(params: DeparturesParams): Promise<DeparturesResult>;
 }
 
 /**
@@ -110,6 +120,46 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
         routes: res.data.routes.map(toStopRoute),
       };
     },
+
+    async getDepartures(params: DeparturesParams): Promise<DeparturesResult> {
+      const res = await motisStoptimes({
+        ...requestOptions,
+        throwOnError: true,
+        query: {
+          stopId: params.stopId,
+          ...(params.time ? { time: params.time } : {}),
+          ...(params.limit !== undefined ? { n: params.limit } : {}),
+          ...(params.direction ? { direction: params.direction } : {}),
+          realtimeMode: 'REALTIME',
+        },
+      });
+
+      return {
+        stop: toStop(res.data.place),
+        departures: res.data.stopTimes.map(toDeparture),
+        ...(res.data.previousPageCursor ? { previousPageCursor: res.data.previousPageCursor } : {}),
+        ...(res.data.nextPageCursor ? { nextPageCursor: res.data.nextPageCursor } : {}),
+      };
+    },
+  };
+}
+
+function toDeparture(stopTime: StopTime): Departure {
+  return {
+    mode: stopTime.mode,
+    realTime: stopTime.realTime,
+    headsign: stopTime.headsign,
+    tripId: stopTime.tripId,
+    routeShortName: stopTime.routeShortName,
+    routeLongName: stopTime.routeLongName,
+    displayName: stopTime.displayName,
+    agencyName: stopTime.agencyName,
+    scheduledDeparture: stopTime.place.scheduledDeparture ?? stopTime.place.departure ?? '',
+    departure: stopTime.place.departure ?? stopTime.place.scheduledDeparture ?? '',
+    ...(stopTime.place.track ? { track: stopTime.place.track } : {}),
+    cancelled: stopTime.cancelled,
+    tripCancelled: stopTime.tripCancelled,
+    bikesAllowed: stopTime.bikesAllowed,
   };
 }
 
