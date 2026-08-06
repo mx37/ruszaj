@@ -53,6 +53,17 @@ class JourneyOption {
   );
 }
 
+class JourneyPage {
+  const JourneyPage({
+    required this.journeys,
+    this.previousPageCursor,
+    this.nextPageCursor,
+  });
+  final List<JourneyOption> journeys;
+  final String? previousPageCursor;
+  final String? nextPageCursor;
+}
+
 class JourneyLeg {
   const JourneyLeg({
     required this.mode,
@@ -62,6 +73,10 @@ class JourneyLeg {
     this.headsign,
     this.fromName,
     this.toName,
+    this.fromLat,
+    this.fromLon,
+    this.toLat,
+    this.toLon,
     this.intermediateStops = const [],
     this.geometry,
     this.geometryPrecision,
@@ -73,6 +88,10 @@ class JourneyLeg {
   final String? headsign;
   final String? fromName;
   final String? toName;
+  final double? fromLat;
+  final double? fromLon;
+  final double? toLat;
+  final double? toLon;
   final List<IntermediateStop> intermediateStops;
   final String? geometry;
   final int? geometryPrecision;
@@ -85,6 +104,26 @@ class JourneyLeg {
     headsign: json['headsign'] as String?,
     fromName: (json['from'] as Map<String, dynamic>?)?['name'] as String?,
     toName: (json['to'] as Map<String, dynamic>?)?['name'] as String?,
+    fromLat:
+        (((json['from'] as Map<String, dynamic>?)?['coordinates']
+                    as Map<String, dynamic>?)?['lat']
+                as num?)
+            ?.toDouble(),
+    fromLon:
+        (((json['from'] as Map<String, dynamic>?)?['coordinates']
+                    as Map<String, dynamic>?)?['lon']
+                as num?)
+            ?.toDouble(),
+    toLat:
+        (((json['to'] as Map<String, dynamic>?)?['coordinates']
+                    as Map<String, dynamic>?)?['lat']
+                as num?)
+            ?.toDouble(),
+    toLon:
+        (((json['to'] as Map<String, dynamic>?)?['coordinates']
+                    as Map<String, dynamic>?)?['lon']
+                as num?)
+            ?.toDouble(),
     intermediateStops: (json['intermediateStops'] as List<dynamic>? ?? const [])
         .map((stop) => IntermediateStop.fromJson(stop as Map<String, dynamic>))
         .toList(),
@@ -188,10 +227,13 @@ class RuszajApi {
     );
   }
 
-  Future<List<JourneyOption>> journeys({
+  Future<JourneyPage> journeyPage({
     required String from,
     required String to,
     bool walkingOnly = false,
+    DateTime? time,
+    bool arriveBy = false,
+    String? pageCursor,
   }) async {
     final uri = Uri.parse('$_effectiveBaseUrl/v1/journeys').replace(
       queryParameters: {
@@ -199,14 +241,34 @@ class RuszajApi {
         'to': to,
         'numItineraries': '10',
         if (walkingOnly) 'walkingOnly': 'true',
+        if (time != null) 'time': time.toUtc().toIso8601String(),
+        if (arriveBy) 'arriveBy': 'true',
+        if (pageCursor != null) 'pageCursor': pageCursor,
       },
     );
     final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return (data['journeys'] as List)
-        .map((item) => JourneyOption.fromJson(item as Map<String, dynamic>))
-        .toList();
+    return JourneyPage(
+      journeys: (data['journeys'] as List)
+          .map((item) => JourneyOption.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      previousPageCursor: data['previousPageCursor'] as String?,
+      nextPageCursor: data['nextPageCursor'] as String?,
+    );
+  }
+
+  Future<List<JourneyOption>> journeys({
+    required String from,
+    required String to,
+    bool walkingOnly = false,
+  }) async {
+    final page = await journeyPage(
+      from: from,
+      to: to,
+      walkingOnly: walkingOnly,
+    );
+    return page.journeys;
   }
 
   Future<List<NearbyStop>> nearbyStops({
