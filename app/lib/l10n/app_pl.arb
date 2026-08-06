@@ -37,5 +37,9 @@
   "transit": "Transport publiczny",
   "transfers": "przesiadki",
   "transfer": "przesiadka",
-  "minutes": "min"
+  "minutes": "min",
+  "walkTo": "Dojdź do przystanku",
+  "youAreHere": "Jesteś tutaj",
+  "mapLoading": "Wyznaczanie trasy pieszej...",
+  "mapRouteUnavailable": "Trasa piesza niedostępna"
 }

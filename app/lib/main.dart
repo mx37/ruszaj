@@ -9,6 +9,7 @@ import 'widgets/app_icon.dart';
 import 'widgets/floating_nav.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'data/ruszaj_api.dart';
+import 'map/walk_to_stop_page.dart';
 
 void main() => runApp(const RuszajApp());
 
@@ -1180,34 +1181,41 @@ class _NearbyScreenState extends State<_NearbyScreen> {
             ),
             const SizedBox(height: 12),
             for (final stop in stops)
-              Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: AppRadii.field,
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => WalkToStopPage(stop: stop),
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    const AppIcon(
-                      HugeIcons.strokeRoundedBus01,
-                      color: AppColors.blue,
-                    ),
-                    const SizedBox(width: 13),
-                    Expanded(
-                      child: Text(
-                        stop.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: AppRadii.field,
+                  ),
+                  child: Row(
+                    children: [
+                      const AppIcon(
+                        HugeIcons.strokeRoundedBus01,
+                        color: AppColors.blue,
                       ),
-                    ),
-                    Text(
-                      '${stop.distanceMeters} m',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 13,
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Text(
+                          stop.name,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        '${stop.distanceMeters} m',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],

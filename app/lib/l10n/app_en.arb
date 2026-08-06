@@ -37,5 +37,9 @@
   "transit": "Public transport",
   "transfers": "transfers",
   "transfer": "transfer",
-  "minutes": "min"
+  "minutes": "min",
+  "walkTo": "Walk to stop",
+  "youAreHere": "You are here",
+  "mapLoading": "Building walking route...",
+  "mapRouteUnavailable": "Walking route unavailable"
 }

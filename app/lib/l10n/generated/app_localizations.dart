@@ -325,6 +325,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'min'**
   String get minutes;
+
+  /// No description provided for @walkTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk to stop'**
+  String get walkTo;
+
+  /// No description provided for @youAreHere.
+  ///
+  /// In en, this message translates to:
+  /// **'You are here'**
+  String get youAreHere;
+
+  /// No description provided for @mapLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Building walking route...'**
+  String get mapLoading;
+
+  /// No description provided for @mapRouteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking route unavailable'**
+  String get mapRouteUnavailable;
 }
 
 class _AppLocalizationsDelegate

@@ -122,4 +122,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get minutes => 'min';
+
+  @override
+  String get walkTo => 'Dojdź do przystanku';
+
+  @override
+  String get youAreHere => 'Jesteś tutaj';
+
+  @override
+  String get mapLoading => 'Wyznaczanie trasy pieszej...';
+
+  @override
+  String get mapRouteUnavailable => 'Trasa piesza niedostępna';
 }

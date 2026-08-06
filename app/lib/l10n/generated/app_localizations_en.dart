@@ -122,4 +122,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get minutes => 'min';
+
+  @override
+  String get walkTo => 'Walk to stop';
+
+  @override
+  String get youAreHere => 'You are here';
+
+  @override
+  String get mapLoading => 'Building walking route...';
+
+  @override
+  String get mapRouteUnavailable => 'Walking route unavailable';
 }
