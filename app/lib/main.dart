@@ -1653,10 +1653,20 @@ class _JourneyDetail extends StatelessWidget {
       '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 }
 
-class _DetailLeg extends StatelessWidget {
+class _DetailLeg extends StatefulWidget {
   const _DetailLeg({required this.leg, required this.l10n});
   final JourneyLeg leg;
   final AppLocalizations l10n;
+
+  @override
+  State<_DetailLeg> createState() => _DetailLegState();
+}
+
+class _DetailLegState extends State<_DetailLeg> {
+  bool _stopsExpanded = false;
+
+  JourneyLeg get leg => widget.leg;
+  AppLocalizations get l10n => widget.l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -1699,19 +1709,127 @@ class _DetailLeg extends StatelessWidget {
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
-                if (leg.intermediateStops.isNotEmpty) ...[
-                  const SizedBox(height: 7),
-                  Text(
-                    '${leg.intermediateStops.length} ${l10n.stops}',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 13,
-                    ),
+                if (!isWalk && leg.intermediateStops.isNotEmpty) ...[
+                  const SizedBox(height: 9),
+                  _StopsDropdown(
+                    expanded: _stopsExpanded,
+                    stops: leg.intermediateStops,
+                    onToggle: () =>
+                        setState(() => _stopsExpanded = !_stopsExpanded),
                   ),
                 ],
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  String _time(DateTime value) =>
+      '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+}
+
+class _StopsDropdown extends StatelessWidget {
+  const _StopsDropdown({
+    required this.expanded,
+    required this.stops,
+    required this.onToggle,
+  });
+  final bool expanded;
+  final List<IntermediateStop> stops;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.blueSoft,
+        borderRadius: AppRadii.field,
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: AppRadii.field,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  const AppIcon(
+                    HugeIcons.strokeRoundedBus01,
+                    size: 16,
+                    color: AppColors.blue,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${stops.length} ${stops.length == 1 ? l10n.stop : l10n.stops}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  AppIcon(
+                    expanded
+                        ? HugeIcons.strokeRoundedArrowUp01
+                        : HugeIcons.strokeRoundedArrowDown01,
+                    size: 16,
+                    color: AppColors.muted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (expanded)
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.line)),
+              ),
+              child: Column(
+                children: [
+                  for (var index = 0; index < stops.length; index++) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 24),
+                          Expanded(
+                            child: Text(
+                              stops[index].name,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                          if (stops[index].arrival != null)
+                            Text(
+                              _time(stops[index].arrival!),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.muted,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (index != stops.length - 1)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 36),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.line,
+                        ),
+                      ),
+                  ],
+                ],
+              ),
+            ),
         ],
       ),
     );

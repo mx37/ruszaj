@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'Stops'**
   String get stops;
 
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'stop'**
+  String get stop;
+
   /// No description provided for @settings.
   ///
   /// In en, this message translates to:

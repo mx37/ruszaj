@@ -45,6 +45,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get stops => 'Przystanki';
 
   @override
+  String get stop => 'przystanek';
+
+  @override
   String get settings => 'Ustawienia';
 
   @override

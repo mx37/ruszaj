@@ -73,7 +73,7 @@ class JourneyLeg {
   final String? headsign;
   final String? fromName;
   final String? toName;
-  final List<String> intermediateStops;
+  final List<IntermediateStop> intermediateStops;
   final String? geometry;
   final int? geometryPrecision;
 
@@ -86,11 +86,27 @@ class JourneyLeg {
     fromName: (json['from'] as Map<String, dynamic>?)?['name'] as String?,
     toName: (json['to'] as Map<String, dynamic>?)?['name'] as String?,
     intermediateStops: (json['intermediateStops'] as List<dynamic>? ?? const [])
-        .map((stop) => (stop as Map<String, dynamic>)['name'] as String)
+        .map((stop) => IntermediateStop.fromJson(stop as Map<String, dynamic>))
         .toList(),
     geometry: json['geometry'] as String?,
     geometryPrecision: json['geometryPrecision'] as int?,
   );
+}
+
+class IntermediateStop {
+  const IntermediateStop({required this.name, this.arrival});
+  final String name;
+  final DateTime? arrival;
+
+  factory IntermediateStop.fromJson(Map<String, dynamic> json) {
+    final departureRaw = json['departure'] as String?;
+    final arrivalRaw = json['arrival'] as String?;
+    final time = arrivalRaw ?? departureRaw;
+    return IntermediateStop(
+      name: json['name'] as String,
+      arrival: time == null ? null : DateTime.parse(time).toLocal(),
+    );
+  }
 }
 
 class NearbyStop {

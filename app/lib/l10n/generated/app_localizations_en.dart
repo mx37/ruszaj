@@ -45,6 +45,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stops => 'Stops';
 
   @override
+  String get stop => 'stop';
+
+  @override
   String get settings => 'Settings';
 
   @override

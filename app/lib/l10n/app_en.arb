@@ -12,6 +12,7 @@
   "clear": "Clear",
   "route": "Route",
   "stops": "Stops",
+  "stop": "stop",
   "settings": "Settings",
   "recentRoutes": "Recent routes",
   "noRecentRoutes": "Your recent routes will appear here.",
