@@ -11,6 +11,24 @@ abstract final class AppColors {
   static const blueSoft = Color(0xFFEFF6FF);
   static const blueLine = Color(0xFFBFDBFE);
   static const green = Color(0xFF10B981);
+
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color textMuted(BuildContext context) =>
+      isDark(context) ? const Color(0xFF9CA3AF) : muted;
+
+  static Color lineOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFF2C3644) : line;
+
+  static Color softOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFF182339) : blueSoft;
+
+  static Color lineSoftOf(BuildContext context) =>
+      isDark(context) ? const Color(0xFF3E4C63) : blueLine;
+
+  static Color selectedTextOf(BuildContext context) =>
+      isDark(context) ? Colors.white : ink;
 }
 
 abstract final class AppRadii {

@@ -226,9 +226,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       else ...[
                         Text(
                           l10n.appTagline,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: AppColors.muted,
+                            color: AppColors.textMuted(context),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -386,10 +386,10 @@ class _Header extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 5),
-              const AppIcon(
+              AppIcon(
                 HugeIcons.strokeRoundedArrowDown01,
                 size: 17,
-                color: AppColors.muted,
+                color: AppColors.textMuted(context),
               ),
             ],
           ),
@@ -696,12 +696,14 @@ class _JourneyCardState extends State<_JourneyCard> {
             padding: const EdgeInsets.only(left: 18),
             child: Row(
               children: [
-                Expanded(child: Container(height: 1, color: AppColors.line)),
+                Expanded(
+                  child: Container(height: 1, color: AppColors.lineOf(context)),
+                ),
                 const SizedBox(width: 10),
-                const AppIcon(
+                AppIcon(
                   HugeIcons.strokeRoundedArrowUpDown,
                   size: 19,
-                  color: AppColors.muted,
+                  color: AppColors.textMuted(context),
                 ),
               ],
             ),
@@ -853,7 +855,7 @@ class _RecentEmpty extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: AppColors.lineOf(context)),
         borderRadius: AppRadii.card,
       ),
       child: Row(
@@ -866,7 +868,10 @@ class _RecentEmpty extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(color: AppColors.muted, height: 1.4),
+              style: TextStyle(
+                color: AppColors.textMuted(context),
+                height: 1.4,
+              ),
             ),
           ),
         ],
@@ -916,7 +921,7 @@ class _RecentRoute extends StatelessWidget {
                   to,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.textMuted(context)),
                 ),
               ],
             ),
@@ -941,8 +946,8 @@ class _CitySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-    decoration: const BoxDecoration(
-      color: AppColors.canvas,
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     child: Column(
@@ -952,7 +957,7 @@ class _CitySheet extends StatelessWidget {
           width: 36,
           height: 4,
           decoration: BoxDecoration(
-            color: AppColors.line,
+            color: AppColors.lineOf(context),
             borderRadius: AppRadii.pill,
           ),
         ),
@@ -1217,7 +1222,7 @@ class _SavePlaceSheetState extends State<_SavePlaceSheet> {
           Text(
             l10n.icon,
             style: TextStyle(
-              color: AppColors.muted,
+              color: AppColors.textMuted(context),
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -1237,7 +1242,7 @@ class _SavePlaceSheetState extends State<_SavePlaceSheet> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: _iconKey == entry.key
-                          ? AppColors.blueSoft
+                          ? AppColors.softOf(context)
                           : Colors.transparent,
                       borderRadius: AppRadii.field,
                     ),
@@ -1245,7 +1250,7 @@ class _SavePlaceSheetState extends State<_SavePlaceSheet> {
                       entry.value,
                       color: _iconKey == entry.key
                           ? AppColors.blue
-                          : AppColors.muted,
+                          : AppColors.textMuted(context),
                       size: 24,
                     ),
                   ),
@@ -1290,7 +1295,7 @@ class _Suggestions extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(top: 10),
     decoration: BoxDecoration(
-      color: AppColors.blueSoft,
+      color: AppColors.softOf(context),
       borderRadius: AppRadii.field,
     ),
     child: searching
@@ -1369,7 +1374,7 @@ class _JourneyResults extends StatelessWidget {
                           '$fromName  →  $toName',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.muted),
+                          style: TextStyle(color: AppColors.textMuted(context)),
                         ),
                       ],
                     ),
@@ -1382,7 +1387,7 @@ class _JourneyResults extends StatelessWidget {
                   ? Center(
                       child: Text(
                         l10n.noUpcomingJourneys,
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.textMuted(context)),
                       ),
                     )
                   : ListView.builder(
@@ -1439,8 +1444,8 @@ class _JourneyResults extends StatelessWidget {
                                     const Spacer(),
                                     Text(
                                       '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
+                                      style: TextStyle(
+                                        color: AppColors.textMuted(context),
                                       ),
                                     ),
                                   ],
@@ -1459,8 +1464,8 @@ class _JourneyResults extends StatelessWidget {
                                   journey.transfers == 0
                                       ? l10n.transit
                                       : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
-                                  style: const TextStyle(
-                                    color: AppColors.muted,
+                                  style: TextStyle(
+                                    color: AppColors.textMuted(context),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -1499,7 +1504,7 @@ class _ModeChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: isWalk
-            ? AppColors.blueSoft
+            ? AppColors.softOf(context)
             : Theme.of(context).colorScheme.onSurface,
         borderRadius: AppRadii.pill,
       ),
@@ -1583,9 +1588,9 @@ class _JourneyDetail extends StatelessWidget {
                                 toName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: AppColors.muted,
+                                  color: AppColors.textMuted(context),
                                 ),
                               ),
                             ],
@@ -1626,7 +1631,9 @@ class _JourneyDetail extends StatelessWidget {
                           const Spacer(),
                           Text(
                             '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(
+                              color: AppColors.textMuted(context),
+                            ),
                           ),
                         ],
                       ),
@@ -1700,7 +1707,7 @@ class _DetailLegState extends State<_DetailLeg> {
                 const SizedBox(height: 5),
                 Text(
                   '${_time(leg.departure)}  →  ${_time(leg.arrival)}',
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.textMuted(context)),
                 ),
                 if (leg.fromName != null || leg.toName != null) ...[
                   const SizedBox(height: 7),
@@ -1745,7 +1752,7 @@ class _StopsDropdown extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.blueSoft,
+        color: AppColors.softOf(context),
         borderRadius: AppRadii.field,
       ),
       child: Column(
@@ -1777,7 +1784,7 @@ class _StopsDropdown extends StatelessWidget {
                         ? HugeIcons.strokeRoundedArrowUp01
                         : HugeIcons.strokeRoundedArrowDown01,
                     size: 16,
-                    color: AppColors.muted,
+                    color: AppColors.textMuted(context),
                   ),
                 ],
               ),
@@ -1785,8 +1792,10 @@ class _StopsDropdown extends StatelessWidget {
           ),
           if (expanded)
             Container(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.line)),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: AppColors.lineOf(context)),
+                ),
               ),
               child: Column(
                 children: [
@@ -1808,9 +1817,9 @@ class _StopsDropdown extends StatelessWidget {
                           if (stops[index].arrival != null)
                             Text(
                               _time(stops[index].arrival!),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.muted,
+                                color: AppColors.textMuted(context),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -1818,12 +1827,12 @@ class _StopsDropdown extends StatelessWidget {
                       ),
                     ),
                     if (index != stops.length - 1)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(left: 36),
                         child: Divider(
                           height: 1,
                           thickness: 1,
-                          color: AppColors.line,
+                          color: AppColors.lineOf(context),
                         ),
                       ),
                   ],
@@ -1878,12 +1887,12 @@ class _NearbyScreenState extends State<_NearbyScreen> {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.line),
+              border: Border.all(color: AppColors.lineOf(context)),
               borderRadius: AppRadii.card,
             ),
             child: Text(
               l10n.locationUnavailable,
-              style: const TextStyle(color: AppColors.muted),
+              style: TextStyle(color: AppColors.textMuted(context)),
             ),
           );
         }
@@ -1925,8 +1934,8 @@ class _NearbyScreenState extends State<_NearbyScreen> {
                       ),
                       Text(
                         '${stop.distanceMeters} m',
-                        style: const TextStyle(
-                          color: AppColors.muted,
+                        style: TextStyle(
+                          color: AppColors.textMuted(context),
                           fontSize: 13,
                         ),
                       ),

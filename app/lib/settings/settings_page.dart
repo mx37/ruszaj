@@ -86,8 +86,8 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: const TextStyle(
-      color: AppColors.muted,
+    style: TextStyle(
+      color: AppColors.textMuted(context),
       fontSize: 13,
       fontWeight: FontWeight.w700,
     ),
@@ -104,41 +104,45 @@ class _SettingOption extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: selected
-            ? AppColors.blueSoft
-            : Theme.of(context).colorScheme.surface,
-        borderRadius: AppRadii.field,
-        border: Border.all(
-          color: selected ? AppColors.blueLine : AppColors.line,
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.softOf(context)
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadii.field,
+          border: Border.all(
+            color: selected
+                ? AppColors.lineSoftOf(context)
+                : AppColors.lineOf(context),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: selected
-                    ? AppColors.ink
-                    : Theme.of(context).colorScheme.onSurface,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? AppColors.selectedTextOf(context)
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
-          ),
-          if (selected)
-            const AppIcon(
-              HugeIcons.strokeRoundedTick01,
-              size: 20,
-              color: AppColors.blue,
-            ),
-        ],
+            if (selected)
+              const AppIcon(
+                HugeIcons.strokeRoundedTick01,
+                size: 20,
+                color: AppColors.blue,
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

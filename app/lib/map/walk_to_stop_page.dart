@@ -110,9 +110,9 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                       children: [
                         Text(
                           l10n.transit,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.muted,
+                            color: AppColors.textMuted(context),
                           ),
                         ),
                         Text(
@@ -218,7 +218,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                   ),
                   Text(
                     l10n.walkTo,
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(color: AppColors.textMuted(context)),
                   ),
                 ],
               ),
@@ -286,7 +286,7 @@ class _WalkToStopPageState extends State<WalkToStopPage> {
                     child: Center(
                       child: Text(
                         l10n.mapRouteUnavailable,
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.textMuted(context)),
                       ),
                     ),
                   ),
@@ -418,7 +418,7 @@ class _MapContent extends StatelessWidget {
                     if (walkingLeg != null)
                       Text(
                         '${walkingLeg.arrival.difference(walkingLeg.departure).inMinutes.ceil()} ${l10n.minutes}',
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.textMuted(context)),
                       ),
                   ],
                 ),
@@ -452,7 +452,10 @@ class _MapHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 14, color: AppColors.muted),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMuted(context),
+                ),
               ),
               Text(
                 stop.name,
