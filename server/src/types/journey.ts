@@ -27,6 +27,8 @@ export interface JourneyLeg {
   agencyName?: string;
   cancelled?: boolean;
   intermediateStops: JourneyStop[];
+  geometry?: string;
+  geometryPrecision?: number;
 }
 
 export interface Journey {
@@ -55,4 +57,5 @@ export interface JourneySearchParams {
   transitModes?: string[];
   numItineraries?: number;
   pageCursor?: string;
+  walkingOnly?: boolean;
 }

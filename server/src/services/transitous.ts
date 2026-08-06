@@ -83,6 +83,7 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
           ...(params.arriveBy !== undefined ? { arriveBy: params.arriveBy } : {}),
           ...(params.maxTransfers !== undefined ? { maxTransfers: params.maxTransfers } : {}),
           ...(params.transitModes ? { transitModes: params.transitModes as Mode[] } : {}),
+          ...(params.walkingOnly ? { transitModes: [] } : {}),
           ...(params.numItineraries !== undefined ? { numItineraries: params.numItineraries } : {}),
           ...(params.pageCursor ? { pageCursor: params.pageCursor } : {}),
           directModes: ['WALK'],
@@ -303,5 +304,7 @@ function toJourneyLeg(leg: Leg): JourneyLeg {
     ...(leg.agencyName ? { agencyName: leg.agencyName } : {}),
     ...(leg.cancelled ? { cancelled: true } : {}),
     intermediateStops: (leg.intermediateStops ?? []).map(toJourneyStop),
+    ...(leg.legGeometry.points ? { geometry: leg.legGeometry.points } : {}),
+    ...(leg.legGeometry.points ? { geometryPrecision: leg.legGeometry.precision } : {}),
   };
 }

@@ -63,6 +63,8 @@ class JourneyLeg {
     this.fromName,
     this.toName,
     this.intermediateStops = const [],
+    this.geometry,
+    this.geometryPrecision,
   });
   final String mode;
   final DateTime departure;
@@ -72,6 +74,8 @@ class JourneyLeg {
   final String? fromName;
   final String? toName;
   final List<String> intermediateStops;
+  final String? geometry;
+  final int? geometryPrecision;
 
   factory JourneyLeg.fromJson(Map<String, dynamic> json) => JourneyLeg(
     mode: json['mode'] as String,
@@ -84,6 +88,8 @@ class JourneyLeg {
     intermediateStops: (json['intermediateStops'] as List<dynamic>? ?? const [])
         .map((stop) => (stop as Map<String, dynamic>)['name'] as String)
         .toList(),
+    geometry: json['geometry'] as String?,
+    geometryPrecision: json['geometryPrecision'] as int?,
   );
 }
 
@@ -92,15 +98,21 @@ class NearbyStop {
     required this.id,
     required this.name,
     required this.distanceMeters,
+    required this.lat,
+    required this.lon,
   });
   final String id;
   final String name;
   final int distanceMeters;
+  final double lat;
+  final double lon;
 
   factory NearbyStop.fromJson(Map<String, dynamic> json) => NearbyStop(
     id: json['id'] as String,
     name: json['name'] as String,
     distanceMeters: json['distanceMeters'] as int,
+    lat: (json['coordinates']['lat'] as num).toDouble(),
+    lon: (json['coordinates']['lon'] as num).toDouble(),
   );
 }
 
@@ -143,9 +155,15 @@ class RuszajApi {
   Future<List<JourneyOption>> journeys({
     required String from,
     required String to,
+    bool walkingOnly = false,
   }) async {
     final uri = Uri.parse('$_effectiveBaseUrl/v1/journeys').replace(
-      queryParameters: {'from': from, 'to': to, 'numItineraries': '10'},
+      queryParameters: {
+        'from': from,
+        'to': to,
+        'numItineraries': '10',
+        if (walkingOnly) 'walkingOnly': 'true',
+      },
     );
     final response = await _client.get(uri).timeout(_timeout);
     _check(response);

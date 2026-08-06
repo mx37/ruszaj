@@ -10,6 +10,7 @@ interface JourneyQuery {
   numItineraries?: number;
   transitModes?: string;
   pageCursor?: string;
+  walkingOnly?: boolean;
 }
 
 export const journeyRoutes: FastifyPluginAsync<{ transitous: TransitousService }> = async (
@@ -31,6 +32,7 @@ export const journeyRoutes: FastifyPluginAsync<{ transitous: TransitousService }
           numItineraries: { type: 'integer', minimum: 1 },
           transitModes: { type: 'string' },
           pageCursor: { type: 'string' },
+          walkingOnly: { type: 'boolean' },
         },
       },
     },
@@ -52,6 +54,7 @@ export const journeyRoutes: FastifyPluginAsync<{ transitous: TransitousService }
         ...(q.numItineraries !== undefined ? { numItineraries: q.numItineraries } : {}),
         ...(transitModes && transitModes.length > 0 ? { transitModes } : {}),
         ...(q.pageCursor ? { pageCursor: q.pageCursor } : {}),
+        ...(q.walkingOnly !== undefined ? { walkingOnly: q.walkingOnly } : {}),
       });
     },
   });
