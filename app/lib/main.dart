@@ -190,6 +190,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _deleteRecentRoute(Map<String, String> route) async {
+    final routes = _recentRoutes.where((item) => item != route).toList();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      'recent_routes',
+      routes.map(jsonEncode).toList(),
+    );
+    if (mounted) setState(() => _recentRoutes = routes);
+  }
+
   Future<void> _loadCity() async {
     final preferences = await SharedPreferences.getInstance();
     final city = preferences.getString('city');
@@ -244,6 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               from: route['from'] ?? '',
                               to: route['to'] ?? '',
                               onTap: () => _openRecentRoute(route),
+                              onDelete: () => _deleteRecentRoute(route),
                             ),
                       ],
                     ]),
@@ -301,11 +312,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<String?> _useCurrentLocation() async {
+  Future<SearchPlace?> _useCurrentLocation() async {
     final l10n = AppLocalizations.of(context);
     try {
       final position = await _locationService.currentPosition();
-      return '${position.latitude},${position.longitude}';
+      return await _api.reverseGeocode(
+            lat: position.latitude,
+            lon: position.longitude,
+          ) ??
+          SearchPlace(
+            id: '${position.latitude},${position.longitude}',
+            name:
+                '${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}',
+            type: 'ADDRESS',
+            lat: position.latitude,
+            lon: position.longitude,
+          );
     } on LocationException catch (error) {
       if (!mounted) return null;
       final message = error.code == 'permission-denied-forever'
@@ -388,7 +410,7 @@ class _JourneyCard extends StatefulWidget {
     required this.onSaved,
     required this.city,
   });
-  final Future<String?> Function() onUseLocation;
+  final Future<SearchPlace?> Function() onUseLocation;
   final Future<void> Function(
     String from,
     String to,
@@ -446,6 +468,26 @@ class _JourneyCardState extends State<_JourneyCard> {
       place,
       ..._recentPlaces.where((item) => item.id != place.id),
     ].take(8).toList();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(
+      'recent_places',
+      places
+          .map(
+            (item) => jsonEncode({
+              'id': item.id,
+              'name': item.name,
+              'type': item.type,
+              'lat': item.lat,
+              'lon': item.lon,
+            }),
+          )
+          .toList(),
+    );
+    if (mounted) setState(() => _recentPlaces = places);
+  }
+
+  Future<void> _deleteRecentPlace(SearchPlace place) async {
+    final places = _recentPlaces.where((item) => item.id != place.id).toList();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setStringList(
       'recent_places',
@@ -524,32 +566,22 @@ class _JourneyCardState extends State<_JourneyCard> {
     _rememberPlace(place);
     setState(() {
       if (isFrom) {
-        _fromValue = place.id.isNotEmpty
-            ? place.id
-            : '${place.lat},${place.lon}';
+        _fromValue = _placeValue(place);
       } else {
-        _toValue = place.id.isNotEmpty ? place.id : '${place.lat},${place.lon}';
+        _toValue = _placeValue(place);
       }
       _suggestions = [];
     });
   }
 
   Future<void> _fillCurrentLocation(bool isFrom) async {
-    final value = await widget.onUseLocation();
-    if (!mounted || value == null) return;
-    final controller = isFrom ? _fromController : _toController;
-    controller.text = value;
-    setState(() {
-      if (isFrom) {
-        _fromValue = value;
-        _editingFrom = true;
-      } else {
-        _toValue = value;
-        _editingFrom = false;
-      }
-      _suggestions = [];
-    });
+    final place = await widget.onUseLocation();
+    if (!mounted || place == null) return;
+    _selectPlace(place, isFrom);
   }
+
+  String _placeValue(SearchPlace place) =>
+      place.type == 'STOP' ? place.id : '${place.lat},${place.lon}';
 
   Future<void> _findRoute() async {
     final l10n = AppLocalizations.of(context);
@@ -598,8 +630,8 @@ class _JourneyCardState extends State<_JourneyCard> {
     final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: AppRadii.card,
       ),
       child: Column(
@@ -645,6 +677,7 @@ class _JourneyCardState extends State<_JourneyCard> {
             _RecentPlaces(
               places: _recentPlaces,
               onSelected: (place) => _selectPlace(place, _editingFrom),
+              onDelete: _deleteRecentPlace,
             ),
           if (_suggestions.isNotEmpty || _searching)
             _Suggestions(
@@ -659,20 +692,20 @@ class _JourneyCardState extends State<_JourneyCard> {
             child: ElevatedButton(
               onPressed: _loadingRoute ? null : _findRoute,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.onSurface,
+                foregroundColor: Theme.of(context).colorScheme.surface,
                 elevation: 0,
                 shape: const RoundedRectangleBorder(
                   borderRadius: AppRadii.pill,
                 ),
               ),
               child: _loadingRoute
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                       ),
                     )
                   : Text(
@@ -743,7 +776,10 @@ class _PlaceField extends StatelessWidget {
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: const TextStyle(fontSize: 17, color: AppColors.ink),
+              style: TextStyle(
+                fontSize: 17,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ],
         ),
@@ -790,10 +826,12 @@ class _RecentRoute extends StatelessWidget {
     required this.from,
     required this.to,
     required this.onTap,
+    required this.onDelete,
   });
   final String from;
   final String to;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -801,8 +839,8 @@ class _RecentRoute extends StatelessWidget {
     child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: AppRadii.field,
       ),
       child: Row(
@@ -827,6 +865,14 @@ class _RecentRoute extends StatelessWidget {
                   style: const TextStyle(color: AppColors.muted),
                 ),
               ],
+            ),
+          ),
+          IconButton(
+            onPressed: onDelete,
+            icon: const AppIcon(
+              HugeIcons.strokeRoundedDelete02,
+              size: 19,
+              color: AppColors.subtle,
             ),
           ),
         ],
@@ -894,9 +940,14 @@ class _CitySheet extends StatelessWidget {
 }
 
 class _RecentPlaces extends StatelessWidget {
-  const _RecentPlaces({required this.places, required this.onSelected});
+  const _RecentPlaces({
+    required this.places,
+    required this.onSelected,
+    required this.onDelete,
+  });
   final List<SearchPlace> places;
   final ValueChanged<SearchPlace> onSelected;
+  final ValueChanged<SearchPlace> onDelete;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -920,6 +971,14 @@ class _RecentPlaces extends StatelessWidget {
             ),
             title: Text(place.name),
             subtitle: Text(place.type),
+            trailing: IconButton(
+              onPressed: () => onDelete(place),
+              icon: const AppIcon(
+                HugeIcons.strokeRoundedDelete02,
+                size: 18,
+                color: AppColors.subtle,
+              ),
+            ),
             onTap: () => onSelected(place),
           ),
       ],
@@ -984,7 +1043,7 @@ class _JourneyResults extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1044,8 +1103,8 @@ class _JourneyResults extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: AppRadii.field,
                       ),
                       child: Column(
@@ -1129,7 +1188,9 @@ class _ModeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
-        color: isWalk ? AppColors.blueSoft : AppColors.ink,
+        color: isWalk
+            ? AppColors.blueSoft
+            : Theme.of(context).colorScheme.onSurface,
         borderRadius: AppRadii.pill,
       ),
       child: Row(
@@ -1140,13 +1201,17 @@ class _ModeChip extends StatelessWidget {
                 ? HugeIcons.strokeRoundedWalking
                 : HugeIcons.strokeRoundedBus01,
             size: 16,
-            color: isWalk ? AppColors.blue : Colors.white,
+            color: isWalk
+                ? AppColors.blue
+                : Theme.of(context).colorScheme.surface,
           ),
           const SizedBox(width: 5),
           Text(
             isWalk ? l10n.walking : (leg.routeName ?? leg.mode),
             style: TextStyle(
-              color: isWalk ? AppColors.blue : Colors.white,
+              color: isWalk
+                  ? AppColors.blue
+                  : Theme.of(context).colorScheme.surface,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),
@@ -1171,7 +1236,7 @@ class _JourneyDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: PageView(
           children: [
@@ -1413,8 +1478,8 @@ class _NearbyScreenState extends State<_NearbyScreen> {
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: AppRadii.field,
                   ),
                   child: Row(

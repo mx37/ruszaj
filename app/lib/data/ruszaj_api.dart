@@ -152,6 +152,26 @@ class RuszajApi {
         .toList();
   }
 
+  Future<SearchPlace?> reverseGeocode({
+    required double lat,
+    required double lon,
+  }) async {
+    final uri = Uri.parse(
+      '$_effectiveBaseUrl/v1/reverse-geocode',
+    ).replace(queryParameters: {'lat': '$lat', 'lon': '$lon'});
+    final response = await _client.get(uri).timeout(_timeout);
+    _check(response);
+    final data = jsonDecode(response.body) as List;
+    if (data.isEmpty) return null;
+    final places = data
+        .map((item) => SearchPlace.fromJson(item as Map<String, dynamic>))
+        .toList();
+    return places.firstWhere(
+      (place) => place.type == 'ADDRESS',
+      orElse: () => places.first,
+    );
+  }
+
   Future<List<JourneyOption>> journeys({
     required String from,
     required String to,

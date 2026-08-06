@@ -123,7 +123,12 @@ class _SettingOption extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? AppColors.ink
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
           if (selected)

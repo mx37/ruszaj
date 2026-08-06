@@ -90,7 +90,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
         ? null
         : Distance().as(LengthUnit.Meter, _current!, end).round();
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -178,7 +178,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                           height: 54,
                           child: const _MapMarker(
                             icon: HugeIcons.strokeRoundedNavigation03,
-                            color: AppColors.ink,
+                            color: AppColors.blue,
                           ),
                         ),
                     ],
@@ -193,8 +193,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(20, 15, 20, 22),
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Row(
@@ -258,7 +258,7 @@ class _WalkToStopPageState extends State<WalkToStopPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: AppColors.canvas,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: FutureBuilder<_WalkingRoute>(
           future: _route,
@@ -392,8 +392,8 @@ class _MapContent extends StatelessWidget {
         ),
         Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Row(
