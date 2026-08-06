@@ -107,4 +107,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchUnavailable => 'Search unavailable';
+
+  @override
+  String get walking => 'Walking';
+
+  @override
+  String get transit => 'Public transport';
+
+  @override
+  String get transfers => 'transfers';
+
+  @override
+  String get transfer => 'transfer';
+
+  @override
+  String get minutes => 'min';
 }

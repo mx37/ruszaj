@@ -787,45 +787,257 @@ class _JourneyResults extends StatelessWidget {
           if (journeys.isEmpty)
             Text(l10n.noRoute, style: const TextStyle(color: AppColors.muted)),
           for (final journey in journeys.take(5))
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: AppRadii.field,
+            GestureDetector(
+              onTap: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => _JourneyDetail(journey: journey),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    _time(journey.departure),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: AppRadii.field,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          _time(journey.departure),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: AppIcon(
+                            HugeIcons.strokeRoundedArrowRight01,
+                            size: 17,
+                            color: AppColors.subtle,
+                          ),
+                        ),
+                        Text(
+                          _time(journey.arrival),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
+                      ],
                     ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: AppIcon(
-                      HugeIcons.strokeRoundedArrowRight01,
-                      size: 17,
-                      color: AppColors.subtle,
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        for (final leg in journey.legs)
+                          _ModeChip(leg: leg, l10n: l10n),
+                      ],
                     ),
-                  ),
-                  Text(
-                    _time(journey.arrival),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
+                    const SizedBox(height: 10),
+                    Text(
+                      journey.transfers == 0
+                          ? l10n.transit
+                          : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${journey.transfers}',
-                    style: const TextStyle(color: AppColors.muted),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  String _time(DateTime value) =>
+      '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+}
+
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({required this.leg, required this.l10n});
+  final JourneyLeg leg;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final isWalk = leg.mode == 'WALK';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: isWalk ? AppColors.blueSoft : AppColors.ink,
+        borderRadius: AppRadii.pill,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcon(
+            isWalk
+                ? HugeIcons.strokeRoundedWalking
+                : HugeIcons.strokeRoundedBus01,
+            size: 16,
+            color: isWalk ? AppColors.blue : Colors.white,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            isWalk ? l10n.walking : (leg.routeName ?? leg.mode),
+            style: TextStyle(
+              color: isWalk ? AppColors.blue : Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _JourneyDetail extends StatelessWidget {
+  const _JourneyDetail({required this.journey});
+  final JourneyOption journey;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .82,
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
+      decoration: const BoxDecoration(
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: AppRadii.pill,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Text(
+                  _time(journey.departure),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: AppIcon(
+                    HugeIcons.strokeRoundedArrowRight01,
+                    color: AppColors.subtle,
+                  ),
+                ),
+                Text(
+                  _time(journey.arrival),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                  style: const TextStyle(color: AppColors.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            for (final leg in journey.legs) _DetailLeg(leg: leg, l10n: l10n),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _time(DateTime value) =>
+      '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+}
+
+class _DetailLeg extends StatelessWidget {
+  const _DetailLeg({required this.leg, required this.l10n});
+  final JourneyLeg leg;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final isWalk = leg.mode == 'WALK';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIcon(
+            isWalk
+                ? HugeIcons.strokeRoundedWalking
+                : HugeIcons.strokeRoundedBus01,
+            color: isWalk ? AppColors.blue : AppColors.green,
+            size: 25,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isWalk
+                      ? l10n.walking
+                      : '${leg.routeName ?? leg.mode}${leg.headsign == null ? '' : ' → ${leg.headsign}'}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${_time(leg.departure)}  →  ${_time(leg.arrival)}',
+                  style: const TextStyle(color: AppColors.muted),
+                ),
+                if (leg.fromName != null || leg.toName != null) ...[
+                  const SizedBox(height: 7),
+                  Text(
+                    '${leg.fromName ?? ''}  →  ${leg.toName ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+                if (leg.intermediateStops.isNotEmpty) ...[
+                  const SizedBox(height: 7),
+                  Text(
+                    '${leg.intermediateStops.length} ${l10n.stops}',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

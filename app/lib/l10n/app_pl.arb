@@ -32,5 +32,10 @@
   "requestFailed": "Nie udało się pobrać wyników",
   "nearbyTitle": "Przystanki w pobliżu",
   "refresh": "Odśwież",
-  "searchUnavailable": "Wyszukiwanie niedostępne"
+  "searchUnavailable": "Wyszukiwanie niedostępne",
+  "walking": "Pieszo",
+  "transit": "Transport publiczny",
+  "transfers": "przesiadki",
+  "transfer": "przesiadka",
+  "minutes": "min"
 }

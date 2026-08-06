@@ -60,12 +60,18 @@ class JourneyLeg {
     required this.arrival,
     this.routeName,
     this.headsign,
+    this.fromName,
+    this.toName,
+    this.intermediateStops = const [],
   });
   final String mode;
   final DateTime departure;
   final DateTime arrival;
   final String? routeName;
   final String? headsign;
+  final String? fromName;
+  final String? toName;
+  final List<String> intermediateStops;
 
   factory JourneyLeg.fromJson(Map<String, dynamic> json) => JourneyLeg(
     mode: json['mode'] as String,
@@ -73,6 +79,11 @@ class JourneyLeg {
     arrival: DateTime.parse(json['arrival'] as String),
     routeName: json['routeShortName'] as String?,
     headsign: json['headsign'] as String?,
+    fromName: (json['from'] as Map<String, dynamic>?)?['name'] as String?,
+    toName: (json['to'] as Map<String, dynamic>?)?['name'] as String?,
+    intermediateStops: (json['intermediateStops'] as List<dynamic>? ?? const [])
+        .map((stop) => (stop as Map<String, dynamic>)['name'] as String)
+        .toList(),
   );
 }
 

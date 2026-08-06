@@ -295,6 +295,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search unavailable'**
   String get searchUnavailable;
+
+  /// No description provided for @walking.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking'**
+  String get walking;
+
+  /// No description provided for @transit.
+  ///
+  /// In en, this message translates to:
+  /// **'Public transport'**
+  String get transit;
+
+  /// No description provided for @transfers.
+  ///
+  /// In en, this message translates to:
+  /// **'transfers'**
+  String get transfers;
+
+  /// No description provided for @transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'transfer'**
+  String get transfer;
+
+  /// No description provided for @minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get minutes;
 }
 
 class _AppLocalizationsDelegate

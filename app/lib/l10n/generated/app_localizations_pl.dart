@@ -107,4 +107,19 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get searchUnavailable => 'Wyszukiwanie niedostępne';
+
+  @override
+  String get walking => 'Pieszo';
+
+  @override
+  String get transit => 'Transport publiczny';
+
+  @override
+  String get transfers => 'przesiadki';
+
+  @override
+  String get transfer => 'przesiadka';
+
+  @override
+  String get minutes => 'min';
 }

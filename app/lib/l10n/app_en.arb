@@ -32,5 +32,10 @@
   "requestFailed": "Could not load results",
   "nearbyTitle": "Nearby stops",
   "refresh": "Refresh",
-  "searchUnavailable": "Search unavailable"
+  "searchUnavailable": "Search unavailable",
+  "walking": "Walking",
+  "transit": "Public transport",
+  "transfers": "transfers",
+  "transfer": "transfer",
+  "minutes": "min"
 }
