@@ -98,4 +98,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get requestFailed => 'Nie udało się pobrać wyników';
+
+  @override
+  String get nearbyTitle => 'Przystanki w pobliżu';
+
+  @override
+  String get refresh => 'Odśwież';
 }

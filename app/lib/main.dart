@@ -107,25 +107,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     delegate: SliverChildListDelegate([
                       _Header(city: _city, onCityTap: _chooseCity),
                       const SizedBox(height: 34),
-                      Text(
-                        l10n.appTagline,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: AppColors.muted,
+                      if (_selectedTab == 1)
+                        const _NearbyScreen()
+                      else ...[
+                        Text(
+                          l10n.appTagline,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: AppColors.muted,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      _JourneyCard(onUseLocation: _useCurrentLocation),
-                      const SizedBox(height: 32),
-                      Text(
-                        l10n.recentRoutes,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 18),
+                        _JourneyCard(onUseLocation: _useCurrentLocation),
+                        const SizedBox(height: 32),
+                        Text(
+                          l10n.recentRoutes,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      _RecentEmpty(text: l10n.noRecentRoutes),
+                        const SizedBox(height: 12),
+                        _RecentEmpty(text: l10n.noRecentRoutes),
+                      ],
                     ]),
                   ),
                 ),
@@ -804,4 +808,99 @@ class _JourneyResults extends StatelessWidget {
 
   String _time(DateTime value) =>
       '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+}
+
+class _NearbyScreen extends StatefulWidget {
+  const _NearbyScreen();
+
+  @override
+  State<_NearbyScreen> createState() => _NearbyScreenState();
+}
+
+class _NearbyScreenState extends State<_NearbyScreen> {
+  final _api = RuszajApi();
+  final _location = LocationService();
+  late Future<List<NearbyStop>> _stops;
+
+  @override
+  void initState() {
+    super.initState();
+    _stops = _load();
+  }
+
+  Future<List<NearbyStop>> _load() async {
+    final position = await _location.currentPosition();
+    return _api.nearbyStops(lat: position.latitude, lon: position.longitude);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return FutureBuilder<List<NearbyStop>>(
+      future: _stops,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        if (snapshot.hasError) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.line),
+              borderRadius: AppRadii.card,
+            ),
+            child: Text(
+              l10n.locationUnavailable,
+              style: const TextStyle(color: AppColors.muted),
+            ),
+          );
+        }
+        final stops = snapshot.data ?? [];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.nearbyTitle,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 12),
+            for (final stop in stops)
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppRadii.field,
+                ),
+                child: Row(
+                  children: [
+                    const AppIcon(
+                      HugeIcons.strokeRoundedBus01,
+                      color: AppColors.blue,
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Text(
+                        stop.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    Text(
+                      '${stop.distanceMeters} m',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }

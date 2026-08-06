@@ -98,4 +98,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestFailed => 'Could not load results';
+
+  @override
+  String get nearbyTitle => 'Nearby stops';
+
+  @override
+  String get refresh => 'Refresh';
 }

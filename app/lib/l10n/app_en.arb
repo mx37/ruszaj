@@ -25,9 +25,11 @@
   "selectCity": "Select city",
   "searchCities": "Search cities",
   "noResults": "No results",
-  "close": "Close"
-  ,"routeOptions": "Route options"
-  ,"searching": "Searching..."
-  ,"noRoute": "No route found"
-  ,"requestFailed": "Could not load results"
+  "close": "Close",
+  "routeOptions": "Route options",
+  "searching": "Searching...",
+  "noRoute": "No route found",
+  "requestFailed": "Could not load results",
+  "nearbyTitle": "Nearby stops",
+  "refresh": "Refresh"
 }

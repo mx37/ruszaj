@@ -75,6 +75,23 @@ class JourneyLeg {
   );
 }
 
+class NearbyStop {
+  const NearbyStop({
+    required this.id,
+    required this.name,
+    required this.distanceMeters,
+  });
+  final String id;
+  final String name;
+  final int distanceMeters;
+
+  factory NearbyStop.fromJson(Map<String, dynamic> json) => NearbyStop(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    distanceMeters: json['distanceMeters'] as int,
+  );
+}
+
 class RuszajApi {
   RuszajApi({http.Client? client, String? baseUrl})
     : _client = client ?? http.Client(),
@@ -112,6 +129,21 @@ class RuszajApi {
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return (data['journeys'] as List)
         .map((item) => JourneyOption.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<NearbyStop>> nearbyStops({
+    required double lat,
+    required double lon,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/v1/stops/nearby',
+    ).replace(queryParameters: {'lat': '$lat', 'lon': '$lon', 'limit': '20'});
+    final response = await _client.get(uri);
+    _check(response);
+    final data = jsonDecode(response.body) as List;
+    return data
+        .map((item) => NearbyStop.fromJson(item as Map<String, dynamic>))
         .toList();
   }
 
