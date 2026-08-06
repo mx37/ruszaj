@@ -206,6 +206,18 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearance;
 
+  /// No description provided for @dataSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sources'**
+  String get dataSources;
+
+  /// No description provided for @transitousSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Transitous and OpenStreetMap sources'**
+  String get transitousSources;
+
   /// No description provided for @english.
   ///
   /// In en, this message translates to:

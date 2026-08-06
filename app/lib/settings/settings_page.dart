@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/ruszaj_api.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../theme/app_theme.dart';
@@ -81,6 +82,10 @@ class SettingsPage extends StatelessWidget {
             const SizedBox(height: 10),
             _ApiDomainOption(l10n: l10n),
             const SizedBox(height: 28),
+            _SectionTitle(text: l10n.dataSources),
+            const SizedBox(height: 10),
+            _TransitousOption(l10n: l10n),
+            const SizedBox(height: 28),
             FutureBuilder<PackageInfo>(
               future: PackageInfo.fromPlatform(),
               builder: (context, snapshot) {
@@ -96,6 +101,67 @@ class SettingsPage extends StatelessWidget {
                   ),
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TransitousOption extends StatelessWidget {
+  const _TransitousOption({required this.l10n});
+  final AppLocalizations l10n;
+
+  Future<void> _openSources() async {
+    await launchUrl(
+      Uri.parse('https://transitous.org/sources/'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _openSources,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadii.field,
+          border: Border.all(color: AppColors.lineOf(context)),
+        ),
+        child: Row(
+          children: [
+            const AppIcon(
+              HugeIcons.strokeRoundedBus01,
+              size: 20,
+              color: AppColors.blue,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Transitous',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.transitousSources,
+                    style: TextStyle(
+                      color: AppColors.textMuted(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const AppIcon(
+              HugeIcons.strokeRoundedArrowRight01,
+              size: 18,
+              color: AppColors.subtle,
             ),
           ],
         ),

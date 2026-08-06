@@ -18,6 +18,8 @@
   "noRecentRoutes": "Ostatnie trasy pojawią się tutaj.",
   "language": "Język",
   "appearance": "Wygląd",
+  "dataSources": "Źródła danych",
+  "transitousSources": "Źródła Transitous i OpenStreetMap",
   "english": "English",
   "polish": "Polski",
   "locationPermissionNeeded": "Dostęp do lokalizacji pomoże znaleźć przystanki w pobliżu.",

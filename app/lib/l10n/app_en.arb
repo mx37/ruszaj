@@ -18,6 +18,8 @@
   "noRecentRoutes": "Your recent routes will appear here.",
   "language": "Language",
   "appearance": "Appearance",
+  "dataSources": "Data sources",
+  "transitousSources": "Transitous and OpenStreetMap sources",
   "english": "English",
   "polish": "Polski",
   "locationPermissionNeeded": "Location access helps find stops near you.",
