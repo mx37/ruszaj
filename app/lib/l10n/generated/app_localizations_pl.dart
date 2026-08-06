@@ -216,7 +216,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get apiDomainHint => 'https://api.example.com';
 
   @override
-  String get defaultApiDomain => 'Domyślny lokalny serwer';
+  String get defaultApiDomain => 'Domyślnie: ruszaj.mx37.me';
 
   @override
   String get version => 'Wersja';
