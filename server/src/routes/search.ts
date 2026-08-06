@@ -2,6 +2,7 @@ import { type FastifyPluginAsync } from 'fastify';
 import { type TransitousService } from '../services/transitous.js';
 import { validationError } from '../errors.js';
 import { type SearchResultType } from '../types/search.js';
+import { CITY_BOUNDS } from '../services/city-bounds.js';
 
 const VALID_TYPES = new Set<SearchResultType>(['ADDRESS', 'PLACE', 'STOP']);
 
@@ -21,6 +22,7 @@ export const searchRoutes: FastifyPluginAsync<{ transitous: TransitousService }>
           types: { type: 'string' },
           lat: { type: 'number', minimum: -90, maximum: 90 },
           lon: { type: 'number', minimum: -180, maximum: 180 },
+          city: { type: 'string', minLength: 1 },
         },
       },
     },
@@ -31,6 +33,7 @@ export const searchRoutes: FastifyPluginAsync<{ transitous: TransitousService }>
         types?: string;
         lat?: number;
         lon?: number;
+        city?: string;
       };
 
       const types = query.types
@@ -43,6 +46,9 @@ export const searchRoutes: FastifyPluginAsync<{ transitous: TransitousService }>
       if (types && types.some((type) => !VALID_TYPES.has(type))) {
         throw validationError('types must be one of ADDRESS, PLACE, STOP');
       }
+      if (query.city && !CITY_BOUNDS[query.city]) {
+        throw validationError('Unknown city');
+      }
 
       return transitous.search({
         text: query.q,
@@ -50,6 +56,7 @@ export const searchRoutes: FastifyPluginAsync<{ transitous: TransitousService }>
         ...(types && types.length > 0 ? { types } : {}),
         ...(query.lat !== undefined ? { lat: query.lat } : {}),
         ...(query.lon !== undefined ? { lon: query.lon } : {}),
+        ...(query.city ? { city: query.city } : {}),
       });
     },
   });

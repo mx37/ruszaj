@@ -29,6 +29,7 @@ import {
   type StopDetails,
 } from '../types/stop.js';
 import { type SearchParams, type SearchResult } from '../types/search.js';
+import { CITY_BOUNDS } from './city-bounds.js';
 
 export interface TransitousServiceConfig {
   baseUrl: string;
@@ -147,6 +148,7 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
+      const bounds = params.city ? CITY_BOUNDS[params.city] : undefined;
       const res = await motisGeocode({
         ...requestOptions,
         throwOnError: true,
@@ -157,11 +159,22 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
           ...(params.lat !== undefined && params.lon !== undefined
             ? { place: `${params.lat},${params.lon}`, placeBias: 1 }
             : {}),
+          ...(bounds
+            ? {
+                min: `${bounds.minLat},${bounds.minLon}`,
+                max: `${bounds.maxLat},${bounds.maxLon}`,
+              }
+            : {}),
           language: ['pl'],
         },
       });
 
-      return res.data.map(toSearchResult);
+      return res.data
+        .filter((match) => {
+          if (!bounds) return true;
+          return match.lat >= bounds.minLat && match.lat <= bounds.maxLat && match.lon >= bounds.minLon && match.lon <= bounds.maxLon;
+        })
+        .map(toSearchResult);
     },
   };
 }

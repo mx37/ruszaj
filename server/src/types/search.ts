@@ -23,4 +23,5 @@ export interface SearchParams {
   types?: SearchResultType[];
   lat?: number;
   lon?: number;
+  city?: string;
 }

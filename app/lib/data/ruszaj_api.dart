@@ -111,10 +111,16 @@ class RuszajApi {
         : 'http://127.0.0.1:8080';
   }
 
-  Future<List<SearchPlace>> search(String query, {int limit = 8}) async {
+  Future<List<SearchPlace>> search(
+    String query, {
+    int limit = 8,
+    String? city,
+  }) async {
+    final queryParameters = {'q': query, 'limit': '$limit'};
+    if (city != null) queryParameters['city'] = city;
     final uri = Uri.parse(
       '$_effectiveBaseUrl/v1/search',
-    ).replace(queryParameters: {'q': query, 'limit': '$limit'});
+    ).replace(queryParameters: queryParameters);
     final response = await _client.get(uri).timeout(_timeout);
     _check(response);
     final data = jsonDecode(response.body) as List;

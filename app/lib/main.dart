@@ -118,7 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        _JourneyCard(onUseLocation: _useCurrentLocation),
+                        _JourneyCard(
+                          onUseLocation: _useCurrentLocation,
+                          city: _city,
+                        ),
                         const SizedBox(height: 32),
                         Text(
                           l10n.recentRoutes,
@@ -270,8 +273,9 @@ class _Header extends StatelessWidget {
 }
 
 class _JourneyCard extends StatefulWidget {
-  const _JourneyCard({required this.onUseLocation});
+  const _JourneyCard({required this.onUseLocation, required this.city});
   final VoidCallback onUseLocation;
+  final String city;
 
   @override
   State<_JourneyCard> createState() => _JourneyCardState();
@@ -318,7 +322,7 @@ class _JourneyCardState extends State<_JourneyCard> {
         _searching = true;
       });
       try {
-        final results = await _api.search(value.trim());
+        final results = await _api.search(value.trim(), city: widget.city);
         if (mounted && requestId == _searchRequestId) {
           setState(() => _suggestions = results);
         }
