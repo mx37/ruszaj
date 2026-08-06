@@ -17,6 +17,7 @@
   "recentRoutes": "Recent routes",
   "noRecentRoutes": "Your recent routes will appear here.",
   "language": "Language",
+  "appearance": "Appearance",
   "english": "English",
   "polish": "Polski",
   "locationPermissionNeeded": "Location access helps find stops near you.",

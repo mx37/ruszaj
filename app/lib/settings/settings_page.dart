@@ -64,7 +64,7 @@ class SettingsPage extends StatelessWidget {
               onTap: () => onLocaleChanged(const Locale('pl')),
             ),
             const SizedBox(height: 28),
-            _SectionTitle(text: l10n.settings),
+            _SectionTitle(text: l10n.appearance),
             const SizedBox(height: 10),
             _SettingOption(
               label: l10n.lightTheme,
