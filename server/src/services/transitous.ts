@@ -1,4 +1,5 @@
 import {
+  geocode as motisGeocode,
   health as motisHealth,
   plan as motisPlan,
   stopInfo as motisStopInfo,
@@ -6,6 +7,7 @@ import {
   stoptimes as motisStoptimes,
   type Itinerary,
   type Leg,
+  type Match,
   type Mode,
   type Place,
   type Route,
@@ -26,6 +28,7 @@ import {
   type Stop,
   type StopDetails,
 } from '../types/stop.js';
+import { type SearchParams, type SearchResult } from '../types/search.js';
 
 export interface TransitousServiceConfig {
   baseUrl: string;
@@ -43,6 +46,7 @@ export interface TransitousService {
   getNearbyStops(params: NearbyStopsParams): Promise<Stop[]>;
   getStop(stopId: string): Promise<StopDetails>;
   getDepartures(params: DeparturesParams): Promise<DeparturesResult>;
+  search(params: SearchParams): Promise<SearchResult[]>;
 }
 
 /**
@@ -141,6 +145,41 @@ export function createTransitousService(config: TransitousServiceConfig): Transi
         ...(res.data.nextPageCursor ? { nextPageCursor: res.data.nextPageCursor } : {}),
       };
     },
+
+    async search(params: SearchParams): Promise<SearchResult[]> {
+      const res = await motisGeocode({
+        ...requestOptions,
+        throwOnError: true,
+        query: {
+          text: params.text,
+          ...(params.limit !== undefined ? { numResults: params.limit } : {}),
+          ...(params.types && params.types.length > 0 ? { type: params.types } : {}),
+          ...(params.lat !== undefined && params.lon !== undefined
+            ? { place: `${params.lat},${params.lon}`, placeBias: 1 }
+            : {}),
+          language: ['pl'],
+        },
+      });
+
+      return res.data.map(toSearchResult);
+    },
+  };
+}
+
+function toSearchResult(match: Match): SearchResult {
+  return {
+    id: match.id,
+    name: match.name,
+    type: match.type,
+    coordinates: { lat: match.lat, lon: match.lon },
+    ...(match.level !== undefined ? { level: match.level } : {}),
+    ...(match.street ? { street: match.street } : {}),
+    ...(match.houseNumber ? { houseNumber: match.houseNumber } : {}),
+    ...(match.country ? { country: match.country } : {}),
+    ...(match.zip ? { zip: match.zip } : {}),
+    ...(match.tz ? { tz: match.tz } : {}),
+    ...(match.modes && match.modes.length > 0 ? { modes: match.modes } : {}),
+    score: match.score,
   };
 }
 

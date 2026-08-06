@@ -4,6 +4,7 @@ import { type Config } from './config.js';
 import { createTransitousService } from './services/transitous.js';
 import { healthRoutes } from './routes/health.js';
 import { journeyRoutes } from './routes/journey.js';
+import { searchRoutes } from './routes/search.js';
 import { stopRoutes } from './routes/stops.js';
 
 export function buildApp(config: Config, deps?: { fetch?: typeof globalThis.fetch }): FastifyInstance {
@@ -35,6 +36,7 @@ export function buildApp(config: Config, deps?: { fetch?: typeof globalThis.fetc
   app.register(healthRoutes, { prefix: '/health', config });
   app.register(journeyRoutes, { prefix: '/v1/journeys', transitous });
   app.register(stopRoutes, { prefix: '/v1/stops', transitous });
+  app.register(searchRoutes, { prefix: '/v1/search', transitous });
 
   return app;
 }
