@@ -138,8 +138,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
     final markers = <Marker>[
       Marker(
         point: origin,
-        width: 48,
-        height: 48,
+        width: 36,
+        height: 36,
         child: const _MapMarker(
           icon: HugeIcons.strokeRoundedLocation01,
           color: AppColors.blue,
@@ -152,8 +152,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
       markers.add(
         Marker(
           point: LatLng(leg.fromLat!, leg.fromLon!),
-          width: 48,
-          height: 48,
+          width: 36,
+          height: 36,
           child: _MapMarker(
             icon: HugeIcons.strokeRoundedArrowUpDown,
             color: AppColors.green,
@@ -164,8 +164,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
     markers.add(
       Marker(
         point: destination,
-        width: 48,
-        height: 48,
+        width: 36,
+        height: 36,
         child: const _MapMarker(
           icon: HugeIcons.strokeRoundedBookmark01,
           color: AppColors.green,
@@ -176,8 +176,8 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
       markers.add(
         Marker(
           point: _current!,
-          width: 54,
-          height: 54,
+          width: 42,
+          height: 42,
           child: const _MapMarker(
             icon: HugeIcons.strokeRoundedNavigation03,
             color: AppColors.blue,
@@ -269,7 +269,7 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                   const AppIcon(
                     HugeIcons.strokeRoundedRoute01,
                     color: AppColors.blue,
-                    size: 27,
+                    size: 22,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -443,8 +443,8 @@ class _MapContent extends StatelessWidget {
                 markers: [
                   Marker(
                     point: route.position,
-                    width: 48,
-                    height: 48,
+                    width: 36,
+                    height: 36,
                     child: const _MapMarker(
                       icon: HugeIcons.strokeRoundedLocation01,
                       color: AppColors.blue,
@@ -452,8 +452,8 @@ class _MapContent extends StatelessWidget {
                   ),
                   Marker(
                     point: stopPoint,
-                    width: 48,
-                    height: 48,
+                    width: 36,
+                    height: 36,
                     child: const _MapMarker(
                       icon: HugeIcons.strokeRoundedBus01,
                       color: AppColors.green,
@@ -480,7 +480,7 @@ class _MapContent extends StatelessWidget {
               const AppIcon(
                 HugeIcons.strokeRoundedWalking,
                 color: AppColors.blue,
-                size: 28,
+                size: 22,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -560,12 +560,13 @@ class _MapMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
+    alignment: Alignment.center,
     decoration: BoxDecoration(
       color: color,
       shape: BoxShape.circle,
-      boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 8)],
+      boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 6)],
     ),
-    child: AppIcon(icon, color: Colors.white, size: 23),
+    child: AppIcon(icon, color: Colors.white, size: 17),
   );
 }
 
