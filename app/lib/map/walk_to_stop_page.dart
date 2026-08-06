@@ -183,6 +183,11 @@ class _JourneyRouteMapState extends State<JourneyRouteMap> {
                         ),
                     ],
                   ),
+                  RichAttributionWidget(
+                    attributions: [
+                      TextSourceAttribution('OpenStreetMap contributors'),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -375,6 +380,11 @@ class _MapContent extends StatelessWidget {
                       color: AppColors.green,
                     ),
                   ),
+                ],
+              ),
+              RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution('OpenStreetMap contributors'),
                 ],
               ),
             ],
