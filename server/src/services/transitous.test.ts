@@ -15,7 +15,7 @@ describe('transitous service', () => {
     const fetchMock = mockFetch(200, { rt: true });
     const service = createTransitousService({
       baseUrl: 'https://api.transitous.org',
-      userAgent: 'Ruszaj/0.1.0 (+https://github.com/ruszaj)',
+      userAgent: 'Ruszaj/0.1.0 (+https://github.com/mx37/ruszaj)',
       fetch: fetchMock,
     });
 
@@ -25,7 +25,7 @@ describe('transitous service', () => {
     const [input] = fetchMock.mock.calls[0]!;
     const request = input instanceof Request ? input : new Request(input);
     expect(request.url).toBe('https://api.transitous.org/api/v1/health');
-    expect(request.headers.get('User-Agent')).toBe('Ruszaj/0.1.0 (+https://github.com/ruszaj)');
+    expect(request.headers.get('User-Agent')).toBe('Ruszaj/0.1.0 (+https://github.com/mx37/ruszaj)');
   });
 
   it('reports realtime false when upstream omits it', async () => {

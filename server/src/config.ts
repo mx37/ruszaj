@@ -7,7 +7,7 @@ export interface Config {
   logLevel: string;
 }
 
-const DEFAULT_USER_AGENT = 'Ruszaj/0.1.0 (+https://github.com/ruszaj)';
+const DEFAULT_USER_AGENT = 'Ruszaj/0.1.0 (+https://github.com/mx37/ruszaj)';
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return {
