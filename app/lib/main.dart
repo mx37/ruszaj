@@ -292,11 +292,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _chooseCity() async {
-    final l10n = AppLocalizations.of(context);
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _CitySheet(title: l10n.selectCity),
+    final selected = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (context) => _CityPage(selectedCity: _city)),
     );
     if (selected != null && mounted) {
       final preferences = await SharedPreferences.getInstance();
@@ -1065,62 +1062,171 @@ class _RecentRoute extends StatelessWidget {
   );
 }
 
-class _CitySheet extends StatelessWidget {
-  const _CitySheet({required this.title});
-  final String title;
+class _CityPage extends StatefulWidget {
+  const _CityPage({required this.selectedCity});
+  final String selectedCity;
+
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(20, 14, 20, 30),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 36,
-          height: 4,
-          decoration: BoxDecoration(
-            color: AppColors.lineOf(context),
-            borderRadius: AppRadii.pill,
-          ),
+  State<_CityPage> createState() => _CityPageState();
+}
+
+class _CityPageState extends State<_CityPage> {
+  static const _cities = [
+    'Warszawa',
+    'Kraków',
+    'Łódź',
+    'Wrocław',
+    'Poznań',
+    'Gdańsk',
+    'Szczecin',
+    'Bydgoszcz',
+    'Lublin',
+    'Białystok',
+    'Katowice',
+    'Gdynia',
+    'Częstochowa',
+    'Radom',
+    'Toruń',
+    'Sosnowiec',
+    'Rzeszów',
+    'Kielce',
+    'Gliwice',
+    'Olsztyn',
+    'Zabrze',
+    'Bielsko-Biała',
+    'Bytom',
+    'Zielona Góra',
+    'Rybnik',
+    'Opole',
+    'Tychy',
+    'Gorzów Wielkopolski',
+    'Elbląg',
+    'Płock',
+    'Wałbrzych',
+    'Włocławek',
+    'Tarnów',
+    'Chorzów',
+    'Kalisz',
+    'Koszalin',
+    'Legnica',
+    'Grudziądz',
+    'Słupsk',
+    'Jaworzno',
+    'Jastrzębie-Zdrój',
+  ];
+
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const AppIcon(HugeIcons.strokeRoundedArrowLeft01, size: 24),
         ),
-        const SizedBox(height: 22),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-          ),
+        title: Text(
+          l10n.selectCity,
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        const SizedBox(height: 14),
-        for (final city in [
-          'Warszawa',
-          'Kraków',
-          'Gdańsk',
-          'Wrocław',
-          'Poznań',
-          'Bydgoszcz',
-          'Toruń',
-          'Łódź',
-          'Katowice',
-          'Lublin',
-          'Szczecin',
-        ])
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(city),
-            trailing: const AppIcon(
-              HugeIcons.strokeRoundedArrowRight01,
-              size: 18,
-              color: AppColors.subtle,
-            ),
-            onTap: () => Navigator.pop(context, city),
-          ),
-      ],
-    ),
-  );
+      ),
+      body: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _searchController,
+        builder: (context, value, child) {
+          final query = value.text.trim().toLowerCase();
+          final cities = _cities
+              .where((city) => city.toLowerCase().contains(query))
+              .toList();
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 30),
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: l10n.searchCities,
+                  prefixIcon: const AppIcon(HugeIcons.strokeRoundedSearch01),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadii.field,
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (cities.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 30),
+                  child: Center(
+                    child: Text(
+                      l10n.noResults,
+                      style: TextStyle(color: AppColors.textMuted(context)),
+                    ),
+                  ),
+                )
+              else
+                for (final city in cities)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: Material(
+                      color: city == widget.selectedCity
+                          ? AppColors.softOf(context)
+                          : Theme.of(context).colorScheme.surface,
+                      borderRadius: AppRadii.field,
+                      child: InkWell(
+                        borderRadius: AppRadii.field,
+                        onTap: () => Navigator.pop(context, city),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              AppIcon(
+                                HugeIcons.strokeRoundedBuilding03,
+                                size: 20,
+                                color: city == widget.selectedCity
+                                    ? AppColors.blue
+                                    : AppColors.textMuted(context),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  city,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const AppIcon(
+                                HugeIcons.strokeRoundedArrowRight01,
+                                size: 18,
+                                color: AppColors.subtle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 class SavedPlace {
