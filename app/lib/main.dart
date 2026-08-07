@@ -858,7 +858,7 @@ class _JourneyCardState extends State<_JourneyCard> {
                   const SizedBox(width: 5),
                   AppIcon(
                     HugeIcons.strokeRoundedArrowDown01,
-                    size: 15,
+                    size: 16,
                     color: AppColors.textMuted(context),
                   ),
                 ],
@@ -1161,9 +1161,17 @@ class _CityPageState extends State<_CityPage> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: l10n.searchCities,
-                  prefixIcon: const AppIcon(HugeIcons.strokeRoundedSearch01),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.only(left: 16, right: 8),
+                    child: AppIcon(HugeIcons.strokeRoundedSearch01, size: 20),
+                  ),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 15,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: AppRadii.field,
                     borderSide: BorderSide.none,
