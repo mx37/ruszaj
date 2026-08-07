@@ -9,6 +9,7 @@ import 'theme/app_theme.dart';
 import 'widgets/app_icon.dart';
 import 'widgets/floating_nav.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:intl/intl.dart';
 import 'data/ruszaj_api.dart';
 import 'map/walk_to_stop_page.dart';
 import 'settings/settings_page.dart';
@@ -1660,9 +1661,9 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          MaterialLocalizations.of(
-                            context,
-                          ).formatShortMonthDay(date),
+                          DateFormat.MMM(
+                            Localizations.localeOf(context).toString(),
+                          ).format(date),
                           style: TextStyle(
                             color: selected
                                 ? Colors.white
@@ -1737,10 +1738,6 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
               ),
               child: Text(l10n.saveTime),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel),
           ),
         ],
       ),
