@@ -196,4 +196,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInMaps => 'Open in Maps';
+
+  @override
+  String get connection => 'Connection';
+
+  @override
+  String get apiDomain => 'API domain';
+
+  @override
+  String get apiDomainHint => 'https://api.example.com';
+
+  @override
+  String get defaultApiDomain => 'Default local server';
+
+  @override
+  String get version => 'Version';
 }

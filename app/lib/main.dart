@@ -31,6 +31,12 @@ class _RuszajAppState extends State<RuszajApp> {
     super.initState();
     _loadLocale();
     _loadTheme();
+    _loadApiBaseUrl();
+  }
+
+  Future<void> _loadApiBaseUrl() async {
+    final preferences = await SharedPreferences.getInstance();
+    RuszajApi.setBaseUrlOverride(preferences.getString('api_base_url') ?? '');
   }
 
   Future<void> _loadTheme() async {

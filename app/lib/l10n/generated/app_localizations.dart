@@ -469,6 +469,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in Maps'**
   String get openInMaps;
+
+  /// No description provided for @connection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get connection;
+
+  /// No description provided for @apiDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'API domain'**
+  String get apiDomain;
+
+  /// No description provided for @apiDomainHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://api.example.com'**
+  String get apiDomainHint;
+
+  /// No description provided for @defaultApiDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'Default local server'**
+  String get defaultApiDomain;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
 }
 
 class _AppLocalizationsDelegate

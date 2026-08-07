@@ -196,4 +196,19 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get openInMaps => 'Otwórz w Mapach';
+
+  @override
+  String get connection => 'Połączenie';
+
+  @override
+  String get apiDomain => 'Domena API';
+
+  @override
+  String get apiDomainHint => 'https://api.example.com';
+
+  @override
+  String get defaultApiDomain => 'Domyślny lokalny serwer';
+
+  @override
+  String get version => 'Wersja';
 }

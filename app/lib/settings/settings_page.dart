@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../data/ruszaj_api.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_icon.dart';
@@ -72,6 +75,128 @@ class SettingsPage extends StatelessWidget {
               label: l10n.darkTheme,
               selected: themeMode == ThemeMode.dark,
               onTap: () => onThemeChanged(ThemeMode.dark),
+            ),
+            const SizedBox(height: 28),
+            _SectionTitle(text: l10n.connection),
+            const SizedBox(height: 10),
+            _ApiDomainOption(l10n: l10n),
+            const SizedBox(height: 28),
+            FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                final info = snapshot.data;
+                final value = info == null
+                    ? '...'
+                    : '${info.version}+${info.buildNumber}';
+                return Text(
+                  '${l10n.version} $value',
+                  style: TextStyle(
+                    color: AppColors.textMuted(context),
+                    fontSize: 13,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ApiDomainOption extends StatefulWidget {
+  const _ApiDomainOption({required this.l10n});
+  final AppLocalizations l10n;
+
+  @override
+  State<_ApiDomainOption> createState() => _ApiDomainOptionState();
+}
+
+class _ApiDomainOptionState extends State<_ApiDomainOption> {
+  String get _value => RuszajApi.configuredBaseUrl;
+
+  Future<void> _edit() async {
+    final controller = TextEditingController(text: _value);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: const RoundedRectangleBorder(borderRadius: AppRadii.card),
+        title: Text(widget.l10n.apiDomain),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.url,
+          autocorrect: false,
+          decoration: InputDecoration(
+            hintText: widget.l10n.apiDomainHint,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(widget.l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.blue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: const RoundedRectangleBorder(borderRadius: AppRadii.field),
+            ),
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: Text(widget.l10n.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (result == null) return;
+    RuszajApi.setBaseUrlOverride(result);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString('api_base_url', RuszajApi.configuredBaseUrl);
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final value = _value.isEmpty ? widget.l10n.defaultApiDomain : _value;
+    return GestureDetector(
+      onTap: _edit,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadii.field,
+          border: Border.all(color: AppColors.lineOf(context)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.l10n.apiDomain,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textMuted(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const AppIcon(
+              HugeIcons.strokeRoundedArrowRight01,
+              size: 18,
+              color: AppColors.subtle,
             ),
           ],
         ),

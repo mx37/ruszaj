@@ -69,4 +69,9 @@
   ,"saveTime": "Save time"
   ,"cancel": "Cancel"
   ,"openInMaps": "Open in Maps"
+  ,"connection": "Connection"
+  ,"apiDomain": "API domain"
+  ,"apiDomainHint": "https://api.example.com"
+  ,"defaultApiDomain": "Default local server"
+  ,"version": "Version"
 }

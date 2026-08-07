@@ -181,9 +181,17 @@ class RuszajApi {
   final http.Client _client;
   final String _baseUrl;
   static const _timeout = Duration(seconds: 8);
+  static String _baseUrlOverride = '';
+
+  static String get configuredBaseUrl => _baseUrlOverride;
+
+  static void setBaseUrlOverride(String value) {
+    _baseUrlOverride = value.trim().replaceAll(RegExp(r'/+$'), '');
+  }
 
   String get _effectiveBaseUrl {
     if (_baseUrl.isNotEmpty) return _baseUrl;
+    if (_baseUrlOverride.isNotEmpty) return _baseUrlOverride;
     return defaultTargetPlatform == TargetPlatform.android
         ? 'http://10.0.2.2:8080'
         : 'http://127.0.0.1:8080';
