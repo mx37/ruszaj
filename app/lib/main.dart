@@ -37,7 +37,18 @@ class _RuszajAppState extends State<RuszajApp> {
 
   Future<void> _loadApiBaseUrl() async {
     final preferences = await SharedPreferences.getInstance();
-    RuszajApi.setBaseUrlOverride(preferences.getString('api_base_url') ?? '');
+    final stored = preferences.getString('api_base_url') ?? '';
+    const legacyLocalUrls = {
+      'http://10.0.2.2:8080',
+      'http://127.0.0.1:8080',
+      'http://localhost:8080',
+    };
+    if (legacyLocalUrls.contains(stored)) {
+      await preferences.remove('api_base_url');
+      RuszajApi.setBaseUrlOverride('');
+    } else {
+      RuszajApi.setBaseUrlOverride(stored);
+    }
   }
 
   Future<void> _loadTheme() async {
