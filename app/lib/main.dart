@@ -363,63 +363,73 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(
-                text: 'R',
-                style: TextStyle(color: AppColors.blue),
-              ),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text.rich(
               TextSpan(
-                text: 'uszaj',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                children: [
+                  const TextSpan(
+                    text: 'R',
+                    style: TextStyle(color: AppColors.blue),
+                  ),
+                  TextSpan(
+                    text: 'uszaj',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          style: const TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w900,
-            fontStyle: FontStyle.italic,
-            letterSpacing: -1.5,
-            height: 1,
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
+                fontStyle: FontStyle.italic,
+                letterSpacing: -1.5,
+                height: 1,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
         GestureDetector(
           onTap: onCityTap,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const AppIcon(
-                HugeIcons.strokeRoundedBuilding03,
-                size: 18,
-                color: AppColors.blue,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const AppIcon(
+                    HugeIcons.strokeRoundedBuilding03,
+                    size: 18,
+                    color: AppColors.blue,
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    city,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  AppIcon(
+                    HugeIcons.strokeRoundedArrowDown01,
+                    size: 17,
+                    color: AppColors.textMuted(context),
+                  ),
+                ],
               ),
-              const SizedBox(width: 7),
+              const SizedBox(height: 4),
               Text(
-                city,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 5),
-              AppIcon(
-                HugeIcons.strokeRoundedArrowDown01,
-                size: 17,
-                color: AppColors.textMuted(context),
+                l10n.chooseCity,
+                style: const TextStyle(fontSize: 12, color: AppColors.subtle),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.chooseCity,
-          style: const TextStyle(fontSize: 12, color: AppColors.subtle),
         ),
       ],
     );
