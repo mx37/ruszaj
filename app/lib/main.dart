@@ -1415,14 +1415,7 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
   late DateTime _time = widget.initialTime;
   late bool _arriveBy = widget.arriveBy;
 
-  Future<void> _chooseDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _time,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
-    );
-    if (date == null || !mounted) return;
+  void _chooseDate(DateTime date) {
     setState(
       () => _time = DateTime(
         date.year,
@@ -1432,6 +1425,11 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
         _time.minute,
       ),
     );
+  }
+
+  List<DateTime> _dateOptions() {
+    final selected = DateUtils.dateOnly(_time);
+    return List.generate(5, (index) => selected.add(Duration(days: index - 2)));
   }
 
   Future<void> _chooseTime() async {
@@ -1477,36 +1475,126 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          SegmentedButton<bool>(
-            segments: [
-              ButtonSegment(value: false, label: Text(l10n.leaveAt)),
-              ButtonSegment(value: true, label: Text(l10n.arriveBy)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _arriveBy ? l10n.arriveBy : l10n.leaveAt,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: AppColors.softOf(context),
+                  borderRadius: AppRadii.pill,
+                ),
+                child: Row(
+                  children: [
+                    _TimeModeButton(
+                      label: l10n.leaveAt,
+                      selected: !_arriveBy,
+                      onTap: () => setState(() => _arriveBy = false),
+                    ),
+                    _TimeModeButton(
+                      label: l10n.arriveBy,
+                      selected: _arriveBy,
+                      onTap: () => setState(() => _arriveBy = true),
+                    ),
+                  ],
+                ),
+              ),
             ],
-            selected: {_arriveBy},
-            onSelectionChanged: (value) =>
-                setState(() => _arriveBy = value.first),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _chooseDate,
-                  child: Text(
-                    '${_time.day.toString().padLeft(2, '0')}.${_time.month.toString().padLeft(2, '0')}',
+          SizedBox(
+            height: 92,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _dateOptions().length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final date = _dateOptions()[index];
+                final selected = DateUtils.isSameDay(date, _time);
+                return GestureDetector(
+                  onTap: () => _chooseDate(date),
+                  child: Container(
+                    width: 76,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.blue
+                          : Theme.of(context).colorScheme.surface,
+                      borderRadius: AppRadii.field,
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.blue
+                            : AppColors.lineOf(context),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          MaterialLocalizations.of(
+                            context,
+                          ).formatShortMonthDay(date),
+                          style: TextStyle(
+                            color: selected
+                                ? Colors.white
+                                : AppColors.textMuted(context),
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            color: selected
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _chooseTime,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.softOf(context),
+                borderRadius: AppRadii.field,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _chooseTime,
-                  child: Text(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const AppIcon(
+                    HugeIcons.strokeRoundedClock01,
+                    color: AppColors.blue,
+                    size: 21,
+                  ),
+                  const SizedBox(width: 9),
+                  Text(
                     '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -1515,6 +1603,15 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
               onPressed: () => Navigator.pop(
                 context,
                 _RouteTimeSelection(time: _time, arriveBy: _arriveBy),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.blue,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadii.field,
+                ),
               ),
               child: Text(l10n.saveTime),
             ),
@@ -1527,6 +1624,42 @@ class _RouteTimeSheetState extends State<_RouteTimeSheet> {
       ),
     );
   }
+}
+
+class _TimeModeButton extends StatelessWidget {
+  const _TimeModeButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: selected
+            ? Theme.of(context).colorScheme.surface
+            : Colors.transparent,
+        borderRadius: AppRadii.pill,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: selected
+              ? Theme.of(context).colorScheme.onSurface
+              : AppColors.textMuted(context),
+        ),
+      ),
+    ),
+  );
 }
 
 class _Suggestions extends StatelessWidget {
