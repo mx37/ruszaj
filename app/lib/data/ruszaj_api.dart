@@ -189,8 +189,8 @@ class RuszajApi {
   }
 
   String get _effectiveBaseUrl {
-    if (_baseUrl.isNotEmpty) return _baseUrl;
     if (_baseUrlOverride.isNotEmpty) return _baseUrlOverride;
+    if (_baseUrl.isNotEmpty) return _baseUrl;
     return 'https://ruszaj.mx37.me';
   }
 
