@@ -1731,7 +1731,7 @@ class _JourneyResultsState extends State<_JourneyResults> {
   late JourneyPage _page = widget.page;
   bool _loading = false;
 
-  Future<void> _loadPage(String cursor) async {
+  Future<void> _loadPage(String cursor, {required bool append}) async {
     setState(() => _loading = true);
     try {
       final page = await RuszajApi().journeyPage(
@@ -1741,7 +1741,29 @@ class _JourneyResultsState extends State<_JourneyResults> {
         arriveBy: widget.arriveBy,
         pageCursor: cursor,
       );
-      if (mounted) setState(() => _page = page);
+      if (!mounted) return;
+      final combined = append
+          ? [..._page.journeys, ...page.journeys]
+          : [...page.journeys, ..._page.journeys];
+      final journeys = <JourneyOption>[];
+      final ids = <String>{};
+      for (final journey in combined) {
+        final key = journey.id.isEmpty
+            ? '${journey.departure.toIso8601String()}|${journey.arrival.toIso8601String()}'
+            : journey.id;
+        if (ids.add(key)) journeys.add(journey);
+      }
+      setState(
+        () => _page = JourneyPage(
+          journeys: journeys,
+          previousPageCursor: append
+              ? _page.previousPageCursor ?? page.previousPageCursor
+              : page.previousPageCursor,
+          nextPageCursor: append
+              ? page.nextPageCursor
+              : _page.nextPageCursor ?? page.nextPageCursor,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1793,36 +1815,6 @@ class _JourneyResultsState extends State<_JourneyResults> {
                 ],
               ),
             ),
-            if (_page.previousPageCursor != null ||
-                _page.nextPageCursor != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _loading || _page.previousPageCursor == null
-                          ? null
-                          : () => _loadPage(_page.previousPageCursor!),
-                      icon: const AppIcon(
-                        HugeIcons.strokeRoundedArrowLeft01,
-                        size: 17,
-                      ),
-                      label: Text(l10n.earlier),
-                    ),
-                    TextButton.icon(
-                      onPressed: _loading || _page.nextPageCursor == null
-                          ? null
-                          : () => _loadPage(_page.nextPageCursor!),
-                      icon: const AppIcon(
-                        HugeIcons.strokeRoundedArrowRight01,
-                        size: 17,
-                      ),
-                      label: Text(l10n.later),
-                    ),
-                  ],
-                ),
-              ),
             Expanded(
               child: journeys.isEmpty
                   ? Center(
@@ -1831,105 +1823,143 @@ class _JourneyResultsState extends State<_JourneyResults> {
                         style: TextStyle(color: AppColors.textMuted(context)),
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      itemCount: journeys.length,
-                      itemBuilder: (context, index) {
-                        final journey = journeys[index];
-                        final isPast = journey.departure.isBefore(
-                          DateTime.now(),
-                        );
-                        final textColor = isPast
-                            ? AppColors.textMuted(context)
-                            : Theme.of(context).colorScheme.onSurface;
-                        return GestureDetector(
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => _JourneyDetail(
-                                journey: journey,
-                                fromName: widget.fromName,
-                                toName: widget.toName,
+                  : NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (notification.metrics.extentAfter < 240 &&
+                            _page.nextPageCursor != null &&
+                            !_loading) {
+                          unawaited(
+                            _loadPage(_page.nextPageCursor!, append: true),
+                          );
+                        }
+                        return false;
+                      },
+                      child: RefreshIndicator(
+                        onRefresh: _page.previousPageCursor == null
+                            ? () async {}
+                            : () => _loadPage(
+                                _page.previousPageCursor!,
+                                append: false,
                               ),
-                            ),
-                          ),
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isPast
-                                  ? Theme.of(context).colorScheme.surface
-                                        .withValues(alpha: 0.55)
-                                  : Theme.of(context).colorScheme.surface,
-                              borderRadius: AppRadii.field,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                          itemCount:
+                              journeys.length +
+                              (_loading && _page.nextPageCursor != null
+                                  ? 1
+                                  : 0),
+                          itemBuilder: (context, index) {
+                            if (index >= journeys.length) {
+                              return const Padding(
+                                padding: EdgeInsets.all(18),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+                            final journey = journeys[index];
+                            final isPast = journey.departure.isBefore(
+                              DateTime.now(),
+                            );
+                            final textColor = isPast
+                                ? AppColors.textMuted(context)
+                                : Theme.of(context).colorScheme.onSurface;
+                            return GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => _JourneyDetail(
+                                    journey: journey,
+                                    fromName: widget.fromName,
+                                    toName: widget.toName,
+                                  ),
+                                ),
+                              ),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isPast
+                                      ? Theme.of(context).colorScheme.surface
+                                            .withValues(alpha: 0.55)
+                                      : Theme.of(context).colorScheme.surface,
+                                  borderRadius: AppRadii.field,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      _departureLabel(journey.departure, l10n),
-                                      style: TextStyle(
-                                        color: textColor,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _departureLabel(
+                                            journey.departure,
+                                            l10n,
+                                          ),
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                          ),
+                                          child: AppIcon(
+                                            HugeIcons.strokeRoundedArrowRight01,
+                                            size: 17,
+                                            color: AppColors.subtle,
+                                          ),
+                                        ),
+                                        Text(
+                                          _time(journey.arrival),
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                                          style: TextStyle(
+                                            color: isPast
+                                                ? AppColors.textMuted(context)
+                                                : AppColors.textMuted(context),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                      child: AppIcon(
-                                        HugeIcons.strokeRoundedArrowRight01,
-                                        size: 17,
-                                        color: AppColors.subtle,
-                                      ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 7,
+                                      runSpacing: 7,
+                                      children: [
+                                        for (final leg in journey.legs)
+                                          _ModeChip(leg: leg, l10n: l10n),
+                                      ],
                                     ),
+                                    const SizedBox(height: 10),
                                     Text(
-                                      _time(journey.arrival),
-                                      style: TextStyle(
-                                        color: textColor,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      '${(journey.durationSeconds / 60).round()} ${l10n.minutes}',
+                                      journey.transfers == 0
+                                          ? l10n.transit
+                                          : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
                                       style: TextStyle(
                                         color: isPast
                                             ? AppColors.textMuted(context)
                                             : AppColors.textMuted(context),
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                Wrap(
-                                  spacing: 7,
-                                  runSpacing: 7,
-                                  children: [
-                                    for (final leg in journey.legs)
-                                      _ModeChip(leg: leg, l10n: l10n),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  journey.transfers == 0
-                                      ? l10n.transit
-                                      : '${journey.transfers} ${journey.transfers == 1 ? l10n.transfer : l10n.transfers}',
-                                  style: TextStyle(
-                                    color: isPast
-                                        ? AppColors.textMuted(context)
-                                        : AppColors.textMuted(context),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
             ),
           ],
