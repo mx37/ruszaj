@@ -9,6 +9,7 @@ class SearchPlace {
     required this.lat,
     required this.lon,
   });
+
   final String id;
   final String name;
   final String type;
@@ -33,6 +34,7 @@ class JourneyOption {
     required this.transfers,
     required this.legs,
   });
+
   final String id;
   final DateTime departure;
   final DateTime arrival;
@@ -58,6 +60,7 @@ class JourneyPage {
     this.previousPageCursor,
     this.nextPageCursor,
   });
+
   final List<JourneyOption> journeys;
   final String? previousPageCursor;
   final String? nextPageCursor;
@@ -80,6 +83,7 @@ class JourneyLeg {
     this.geometry,
     this.geometryPrecision,
   });
+
   final String mode;
   final DateTime departure;
   final DateTime arrival;
@@ -133,6 +137,7 @@ class JourneyLeg {
 
 class IntermediateStop {
   const IntermediateStop({required this.name, this.arrival});
+
   final String name;
   final DateTime? arrival;
 
@@ -155,6 +160,7 @@ class NearbyStop {
     required this.lat,
     required this.lon,
   });
+
   final String id;
   final String name;
   final int distanceMeters;
@@ -168,6 +174,157 @@ class NearbyStop {
     lat: (json['coordinates']['lat'] as num).toDouble(),
     lon: (json['coordinates']['lon'] as num).toDouble(),
   );
+}
+
+class StopRoute {
+  const StopRoute({
+    required this.id,
+    required this.shortName,
+    required this.longName,
+    required this.mode,
+    required this.agencyName,
+    this.routeColor,
+  });
+
+  final String id;
+  final String shortName;
+  final String longName;
+  final String mode;
+  final String agencyName;
+  final String? routeColor;
+
+  factory StopRoute.fromJson(Map<String, dynamic> json) => StopRoute(
+    id: json['id'] as String? ?? '',
+    shortName: json['shortName'] as String? ?? '',
+    longName: json['longName'] as String? ?? '',
+    mode: json['mode'] as String? ?? '',
+    agencyName: json['agencyName'] as String? ?? '',
+    routeColor: json['routeColor'] as String?,
+  );
+}
+
+class StopDetails {
+  const StopDetails({
+    required this.id,
+    required this.name,
+    required this.lat,
+    required this.lon,
+    required this.routes,
+    this.stopCode,
+    this.modes = const [],
+  });
+
+  final String id;
+  final String name;
+  final double lat;
+  final double lon;
+  final String? stopCode;
+  final List<String> modes;
+  final List<StopRoute> routes;
+
+  factory StopDetails.fromJson(Map<String, dynamic> json) => StopDetails(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    lat: (json['coordinates']['lat'] as num).toDouble(),
+    lon: (json['coordinates']['lon'] as num).toDouble(),
+    stopCode: json['stopCode'] as String?,
+    modes: (json['modes'] as List<dynamic>? ?? const [])
+        .map((value) => value.toString())
+        .toList(),
+    routes: (json['routes'] as List<dynamic>? ?? const [])
+        .map((value) => StopRoute.fromJson(value as Map<String, dynamic>))
+        .toList(),
+  );
+}
+
+class StopDeparture {
+  const StopDeparture({
+    required this.mode,
+    required this.realTime,
+    required this.headsign,
+    required this.tripId,
+    required this.routeShortName,
+    required this.routeLongName,
+    required this.displayName,
+    required this.agencyName,
+    required this.cancelled,
+    required this.tripCancelled,
+    required this.bikesAllowed,
+    this.scheduledDeparture,
+    this.departure,
+    this.track,
+  });
+
+  final String mode;
+  final bool realTime;
+  final String headsign;
+  final String tripId;
+  final String routeShortName;
+  final String routeLongName;
+  final String displayName;
+  final String agencyName;
+  final DateTime? scheduledDeparture;
+  final DateTime? departure;
+  final String? track;
+  final bool cancelled;
+  final bool tripCancelled;
+  final bool bikesAllowed;
+
+  bool get isCancelled => cancelled || tripCancelled;
+
+  factory StopDeparture.fromJson(Map<String, dynamic> json) => StopDeparture(
+    mode: json['mode'] as String? ?? '',
+    realTime: json['realTime'] as bool? ?? false,
+    headsign: json['headsign'] as String? ?? '',
+    tripId: json['tripId'] as String? ?? '',
+    routeShortName: json['routeShortName'] as String? ?? '',
+    routeLongName: json['routeLongName'] as String? ?? '',
+    displayName: json['displayName'] as String? ?? '',
+    agencyName: json['agencyName'] as String? ?? '',
+    scheduledDeparture: _dateTimeOrNull(json['scheduledDeparture']),
+    departure: _dateTimeOrNull(json['departure']),
+    track: json['track'] as String?,
+    cancelled: json['cancelled'] as bool? ?? false,
+    tripCancelled: json['tripCancelled'] as bool? ?? false,
+    bikesAllowed: json['bikesAllowed'] as bool? ?? false,
+  );
+}
+
+class DeparturesPage {
+  const DeparturesPage({
+    required this.stop,
+    required this.departures,
+    this.previousPageCursor,
+    this.nextPageCursor,
+  });
+
+  final NearbyStop stop;
+  final List<StopDeparture> departures;
+  final String? previousPageCursor;
+  final String? nextPageCursor;
+
+  factory DeparturesPage.fromJson(Map<String, dynamic> json) {
+    final stop = json['stop'] as Map<String, dynamic>;
+    return DeparturesPage(
+      stop: NearbyStop(
+        id: stop['id'] as String,
+        name: stop['name'] as String,
+        distanceMeters: 0,
+        lat: (stop['coordinates']['lat'] as num).toDouble(),
+        lon: (stop['coordinates']['lon'] as num).toDouble(),
+      ),
+      departures: (json['departures'] as List<dynamic>? ?? const [])
+          .map((value) => StopDeparture.fromJson(value as Map<String, dynamic>))
+          .toList(),
+      previousPageCursor: json['previousPageCursor'] as String?,
+      nextPageCursor: json['nextPageCursor'] as String?,
+    );
+  }
+}
+
+DateTime? _dateTimeOrNull(dynamic raw) {
+  if (raw is! String || raw.isEmpty) return null;
+  return DateTime.tryParse(raw)?.toLocal();
 }
 
 class RuszajApi {
@@ -289,6 +446,35 @@ class RuszajApi {
     return data
         .map((item) => NearbyStop.fromJson(item as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<StopDetails> stop(String id) async {
+    final uri = Uri.parse('$_effectiveBaseUrl/v1/stops/${Uri.encodeComponent(id)}');
+    final response = await _client.get(uri).timeout(_timeout);
+    _check(response);
+    return StopDetails.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+  }
+
+  Future<DeparturesPage> departures(
+    String stopId, {
+    int limit = 30,
+    DateTime? time,
+    String direction = 'LATER',
+  }) async {
+    final uri = Uri.parse(
+      '$_effectiveBaseUrl/v1/stops/${Uri.encodeComponent(stopId)}/departures',
+    ).replace(
+      queryParameters: {
+        'limit': '$limit',
+        'direction': direction,
+        if (time != null) 'time': time.toUtc().toIso8601String(),
+      },
+    );
+    final response = await _client.get(uri).timeout(_timeout);
+    _check(response);
+    return DeparturesPage.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   void _check(http.Response response) {
